@@ -2,6 +2,7 @@ import { clampScore } from '../domain/calculations.ts'
 import { createInitialState } from '../domain/initialState.ts'
 import type {
   ActionType,
+  GenderId,
   HelpResourceId,
   LifeAreaId,
   ProgramState,
@@ -9,6 +10,7 @@ import type {
   StepId,
   ValueId,
 } from '../domain/types.ts'
+import { parseExactAge } from '../domain/ageGroup.ts'
 import { filterValues, toggleLimited } from '../domain/validation.ts'
 
 export type ProgramAction =
@@ -44,6 +46,11 @@ export type ProgramAction =
   | { type: 'SET_HELP_NOTE'; text: string }
   | { type: 'SET_FIRST_ACTION_FEASIBILITY'; value: number }
   | { type: 'SET_ENCOURAGEMENT'; text: string }
+  | { type: 'SET_AGE_INPUT'; text: string }
+  | { type: 'SET_AGE_DECLINED'; declined: boolean }
+  | { type: 'SET_GENDER'; gender: GenderId }
+  | { type: 'MARK_USAGE_STARTED' }
+  | { type: 'MARK_USAGE_COMPLETED' }
   | { type: 'SET_LAST_VISITED'; step: StepId }
   | { type: 'MARK_COMPLETED' }
   | { type: 'RESET' }
@@ -57,6 +64,25 @@ export function programReducer(state: ProgramState, action: ProgramAction): Prog
       return createInitialState()
     case 'SET_LAST_VISITED':
       return { ...state, lastVisitedStep: action.step }
+    case 'SET_AGE_INPUT': {
+      const ageInput = action.text
+      return {
+        ...state,
+        ageDeclined: false,
+        ageInput,
+        ageYears: parseExactAge(ageInput),
+      }
+    }
+    case 'SET_AGE_DECLINED':
+      return action.declined
+        ? { ...state, ageDeclined: true, ageInput: '', ageYears: null }
+        : { ...state, ageDeclined: false }
+    case 'SET_GENDER':
+      return { ...state, gender: action.gender }
+    case 'MARK_USAGE_STARTED':
+      return { ...state, usageStartedTracked: true }
+    case 'MARK_USAGE_COMPLETED':
+      return { ...state, usageCompletedTracked: true }
     case 'MARK_COMPLETED':
       return { ...state, programCompleted: true }
     case 'SET_AREA_SCORE':

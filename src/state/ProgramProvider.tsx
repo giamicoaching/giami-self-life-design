@@ -9,6 +9,7 @@ import {
   type ReactNode,
 } from 'react'
 import { createInitialState } from '../domain/initialState.ts'
+import { resetUsageEventLocks } from '../analytics/usage.ts'
 import type { ProgramState, StepId } from '../domain/types.ts'
 import {
   clearProgramState,
@@ -86,8 +87,26 @@ export function ProgramProvider({ children, storage = localStorage }: ProviderPr
     const initial = createInitialState()
     stateRef.current = initial
     dispatch({ type: 'RESET' })
+    resetUsageEventLocks()
     clearProgramState(storage)
   }, [storage])
+
+  const hydrateLegacyFlags = useCallback(() => {
+    const current = stateRef.current
+    const hasScores = Object.values(current.areaScores).some(
+      (score) => score.importance !== null || score.satisfaction !== null,
+    )
+    if (hasScores && !current.usageStartedTracked) {
+      dispatch({ type: 'MARK_USAGE_STARTED' })
+    }
+    if (current.programCompleted && !current.usageCompletedTracked) {
+      dispatch({ type: 'MARK_USAGE_COMPLETED' })
+    }
+  }, [])
+
+  useEffect(() => {
+    hydrateLegacyFlags()
+  }, [hydrateLegacyFlags])
 
   const markVisited = useCallback((step: StepId) => {
     dispatch({ type: 'SET_LAST_VISITED', step })

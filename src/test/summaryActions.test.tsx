@@ -1,6 +1,11 @@
 import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter } from 'react-router-dom'
 import { describe, expect, it } from 'vitest'
+import {
+  COACHING_CENTER_CTA,
+  COACHING_CENTER_TITLE,
+  COACHING_CENTER_URL,
+} from '../copy/programCopy.ts'
 import { SummaryPage } from '../pages/SummaryPage.tsx'
 import { ProgramProvider } from '../state/ProgramProvider.tsx'
 import { SaveToastProvider, SAVE_TOAST_MESSAGE } from '../state/SaveToast.tsx'
@@ -52,5 +57,26 @@ describe('summary result actions', () => {
     expect(screen.getByText(/무엇이 달라질지 구체적인가: 아직 보완이 필요함/)).toBeInTheDocument()
     expect(screen.getByText(/행동 1 \(우선 실행행동\): 걷기 일정 만들기/)).toBeInTheDocument()
     expect(screen.getByText(/행동 2: 수면 일기 쓰기/)).toBeInTheDocument()
+  })
+
+  it('places a secure coaching center invite after results and before save actions', () => {
+    renderSummary()
+    const inviteTitle = screen.getByRole('heading', { name: COACHING_CENTER_TITLE })
+    const inviteLink = screen.getByRole('link', { name: COACHING_CENTER_CTA })
+    const firstAction = screen.getByRole('heading', { name: '첫 행동' })
+    const save = screen.getByRole('button', { name: '결과 저장' })
+    const print = screen.getByRole('button', { name: 'PDF 저장 또는 인쇄' })
+    const complete = screen.getByRole('button', { name: '생애설계 완료' })
+
+    expect(inviteLink).toHaveAttribute('href', COACHING_CENTER_URL)
+    expect(inviteLink).toHaveAttribute('target', '_blank')
+    expect(inviteLink).toHaveAttribute('rel', 'noopener noreferrer')
+    expect(inviteLink.closest('.no-print')).toBeNull()
+    expect(save.closest('.no-print')).toBeTruthy()
+
+    expect(firstAction.compareDocumentPosition(inviteTitle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(inviteLink.compareDocumentPosition(save) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(print).toBeInTheDocument()
+    expect(complete).toBeInTheDocument()
   })
 })

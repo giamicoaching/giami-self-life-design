@@ -1,5 +1,6 @@
 import { LIFE_AREA_IDS } from './types.ts'
 import type { AreaScore, LifeAreaId, ProgramState } from './types.ts'
+import { hasCompleteDemographics } from './demographics.ts'
 
 function emptyScore(): AreaScore {
   return { importance: null, satisfaction: null }
@@ -19,6 +20,12 @@ export function createInitialState(): ProgramState {
     completedStepIds: [],
     programCompleted: false,
     updatedAt: new Date().toISOString(),
+    ageInput: '',
+    ageYears: null,
+    ageDeclined: false,
+    gender: null,
+    usageStartedTracked: false,
+    usageCompletedTracked: false,
     areaScores: emptyAreaScores(),
     priorityAreaId: null,
     priorityReason: '',
@@ -53,18 +60,36 @@ export function createInitialState(): ProgramState {
   }
 }
 
-export function hasSavedProgress(state: ProgramState): boolean {
-  return (
-    state.completedStepIds.length > 0 ||
-    state.lastVisitedStep !== 'home' ||
+export function hasMeaningfulProgress(state: ProgramState): boolean {
+  if (hasCompleteDemographics(state)) return true
+  if (
     Object.values(state.areaScores).some(
       (score) => score.importance !== null || score.satisfaction !== null,
-    ) ||
-    state.priorityAreaId !== null ||
-    state.priorityReason.trim() !== '' ||
-    state.changeIdeas.trim() !== '' ||
-    state.candidateValueIds.length > 0 ||
-    state.goal.trim() !== '' ||
-    state.actions.some((action) => action.trim() !== '')
-  )
+    )
+  ) {
+    return true
+  }
+  if (state.priorityAreaId !== null || state.priorityReason.trim() !== '') return true
+  if (state.changeIdeas.trim() !== '') return true
+  if (state.candidateValueIds.length > 0 || state.coreValueIds.length > 0) return true
+  if (state.refinedChange.trim() !== '') return true
+  if (state.goalValueIds.length > 0 || state.goal.trim() !== '') return true
+  if (state.goalPeriod.trim() !== '' || state.goalCriteria.trim() !== '') return true
+  if (state.goalFeasibility !== null) return true
+  if (Object.values(state.selfChecks).some((value) => value !== null)) return true
+  if (state.actions.some((action) => action.trim() !== '')) return true
+  if (state.primaryActionIndex !== null || state.actionType !== null) return true
+  if (
+    state.actionWhat.trim() !== '' ||
+    state.actionWhen.trim() !== '' ||
+    state.actionWhere.trim() !== '' ||
+    state.actionFrequencyOrDuration.trim() !== ''
+  ) {
+    return true
+  }
+  if (state.obstacle.trim() !== '' || state.alternativeAction.trim() !== '') return true
+  if (state.helpResources.length > 0 || state.helpNote.trim() !== '') return true
+  if (state.firstActionFeasibility !== null || state.selfEncouragement.trim() !== '') return true
+  if (state.completedStepIds.length > 0 || state.programCompleted) return true
+  return state.lastVisitedStep !== 'home'
 }

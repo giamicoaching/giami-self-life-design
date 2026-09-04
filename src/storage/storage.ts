@@ -1,5 +1,7 @@
 import { LIFE_AREA_IDS, VALUE_IDS, HELP_RESOURCE_IDS, STEP_IDS, ACTION_TYPES } from '../domain/types.ts'
 import type { HelpResourceId, LifeAreaId, ProgramState, StepId, ValueId } from '../domain/types.ts'
+import { parseExactAge } from '../domain/ageGroup.ts'
+import { isGenderId } from '../domain/demographics.ts'
 import { createInitialState } from '../domain/initialState.ts'
 import { deriveCompletedSteps } from '../domain/validation.ts'
 
@@ -89,12 +91,23 @@ export function parseProgramState(raw: unknown): ProgramState | null {
     : []
 
   const selfChecksRaw = isRecord(raw.selfChecks) ? raw.selfChecks : {}
+  const ageDeclined = raw.ageDeclined === true
+  const storedAge = typeof raw.ageYears === 'number' ? parseExactAge(String(raw.ageYears)) : null
+  const ageInputRaw = asString(raw.ageInput)
+  const ageYears = ageDeclined ? null : storedAge ?? parseExactAge(ageInputRaw)
+  const ageInput = ageDeclined ? '' : ageInputRaw || (ageYears !== null ? String(ageYears) : '')
 
   const parsed: ProgramState = {
     ...initial,
     lastVisitedStep,
     programCompleted: raw.programCompleted === true,
     updatedAt: asString(raw.updatedAt) || initial.updatedAt,
+    ageInput,
+    ageYears,
+    ageDeclined,
+    gender: isGenderId(raw.gender) ? raw.gender : null,
+    usageStartedTracked: raw.usageStartedTracked === true,
+    usageCompletedTracked: raw.usageCompletedTracked === true,
     areaScores: parseAreaScores(raw.areaScores),
     priorityAreaId: isLifeAreaId(raw.priorityAreaId) ? raw.priorityAreaId : null,
     priorityReason: asString(raw.priorityReason),

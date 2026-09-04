@@ -1,3 +1,4 @@
+import { CHANGE_INDEX_EXPLANATION, CHANGE_INDEX_FORMULA } from '../copy/programCopy.ts'
 import { changeReviewIndex } from '../domain/calculations.ts'
 import { LIFE_AREAS } from '../domain/lifeAreas.ts'
 import type { ProgramState } from '../domain/types.ts'
@@ -51,7 +52,8 @@ export function LifeWheel({ state, titleId = 'wheel-title' }: LifeWheelProps) {
       >
         <title id={titleId}>9축 삶의 수레바퀴</title>
         <desc id={`${titleId}-desc`}>
-          만족도는 연한 면과 실선, 중요도는 점선으로 표시합니다. 각 축에 영역명과 점수가 있습니다.
+          만족도는 연한 면과 실선, 중요도는 점선으로 표시합니다. 각 축에 영역명과 중요도·만족도가
+          있습니다.
         </desc>
         {[1, 3, 5, 7].map((ring) => (
           <polygon
@@ -137,10 +139,8 @@ export function ChangeIndexList({ state }: { state: ProgramState }) {
   return (
     <div className="index-list result-block">
       <h3>변화검토지수</h3>
-      <p className="muted">
-        변화검토지수는 (중요도 − 1) × (7 − 만족도)로 계산한 참고정보입니다. 0~36점이며, 우선
-        영역을 자동으로 정하지 않습니다.
-      </p>
+      <p className="muted">{CHANGE_INDEX_EXPLANATION}</p>
+      <p className="muted">{CHANGE_INDEX_FORMULA}</p>
       <ul>
         {LIFE_AREAS.map((area) => {
           const index = changeReviewIndex(state.areaScores[area.id])

@@ -25,4 +25,12 @@ describe('print layout rules', () => {
     expect(css).toContain('print-color-adjust: exact')
     expect(css).toContain('stroke-dasharray: 6 5')
   })
+
+  it('keeps the coaching center invite in printed summary results', () => {
+    expect(css).toMatch(/\.coaching-invite[\s\S]*break-inside:\s*avoid/)
+    expect(css).toMatch(/\.coaching-invite[\s\S]*page-break-inside:\s*avoid/)
+    expect(css).toMatch(/@media print[\s\S]*\.coaching-invite/)
+    expect(css).not.toMatch(/\.no-print[^{]*\.coaching-invite/)
+    expect(css).not.toMatch(/\.coaching-invite[^{]*\.no-print/)
+  })
 })

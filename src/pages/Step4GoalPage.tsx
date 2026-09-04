@@ -40,7 +40,7 @@ function Step4Body() {
 
   return (
     <>
-      <StepHeading kicker="4단계" title="목표 수립">
+      <StepHeading kicker="4단계" title="나의 목표">
         <p>목표는 직접 작성합니다. 프로그램이 문장을 만들거나 입력을 보완하지 않습니다.</p>
       </StepHeading>
       <article className="card summary-card">
@@ -125,7 +125,7 @@ function Step4Body() {
       />
       <section className="card">
         <h2>자기점검</h2>
-        <p className="muted">점검 내용은 참고용입니다. 예 또는 아직 보완이 필요함으로 표시할 수 있습니다.</p>
+        <p className="muted">점검 내용은 참고정보입니다. 예 또는 아직 보완이 필요함으로 표시할 수 있습니다.</p>
         {SELF_CHECK_ITEMS.map((item) => (
           <fieldset key={item.key} className="check-row">
             <legend>{item.label}</legend>

@@ -72,6 +72,10 @@ export const MAIN_STAGE_IDS = [
 
 export type MainStageId = (typeof MAIN_STAGE_IDS)[number]
 
+export const GENDER_IDS = ['male', 'female', 'declined'] as const
+
+export type GenderId = (typeof GENDER_IDS)[number]
+
 export interface AreaScore {
   importance: number | null
   satisfaction: number | null
@@ -90,6 +94,12 @@ export interface ProgramState {
   completedStepIds: StepId[]
   programCompleted: boolean
   updatedAt: string
+  ageInput: string
+  ageYears: number | null
+  ageDeclined: boolean
+  gender: GenderId | null
+  usageStartedTracked: boolean
+  usageCompletedTracked: boolean
   areaScores: Record<LifeAreaId, AreaScore>
   priorityAreaId: LifeAreaId | null
   priorityReason: string

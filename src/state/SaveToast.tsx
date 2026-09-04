@@ -9,12 +9,13 @@ import {
   type ReactNode,
 } from 'react'
 import { useProgram } from './ProgramProvider.tsx'
+import { trackResultSaved, type ResultSaveScreen } from '../analytics/usage.ts'
 
 export const SAVE_TOAST_MESSAGE = '결과가 저장되었습니다.'
 export const SAVE_TOAST_DURATION_MS = 3000
 
 interface SaveToastContextValue {
-  saveResult: () => void
+  saveResult: (screen: ResultSaveScreen) => void
 }
 
 const SaveToastContext = createContext<SaveToastContextValue | null>(null)
@@ -24,8 +25,9 @@ export function SaveToastProvider({ children }: { children: ReactNode }) {
   const [visible, setVisible] = useState(false)
   const timerRef = useRef<number | null>(null)
 
-  const saveResult = useCallback(() => {
+  const saveResult = useCallback((screen: ResultSaveScreen) => {
     saveNow()
+    trackResultSaved(screen)
     setVisible(true)
     if (timerRef.current !== null) {
       window.clearTimeout(timerRef.current)
@@ -62,7 +64,7 @@ export function SaveToastProvider({ children }: { children: ReactNode }) {
   )
 }
 
-export function useSaveResult(): () => void {
+export function useSaveResult(): (screen: ResultSaveScreen) => void {
   const value = useContext(SaveToastContext)
   if (!value) {
     throw new Error('useSaveResult must be used within SaveToastProvider')

@@ -34,6 +34,12 @@ export function createReadySummaryState(): ProgramState {
     specific: false,
     feasibleInPeriod: true,
   }
+  state.ageInput = '67'
+  state.ageYears = 67
+  state.ageDeclined = false
+  state.gender = 'female'
+  state.usageStartedTracked = true
+  state.usageCompletedTracked = false
   state.lastVisitedStep = 'summary'
   return state
 }

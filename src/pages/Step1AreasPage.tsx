@@ -7,6 +7,7 @@ import { Scale } from '../components/ui/Scale.tsx'
 import { AREA_PAGES, getLifeArea } from '../domain/lifeAreas.ts'
 import type { StepId } from '../domain/types.ts'
 import { canProceedFromStep, stepValidationMessage } from '../domain/validation.ts'
+import { trackLifeDesignStarted } from '../analytics/usage.ts'
 import { useProgram } from '../state/ProgramProvider.tsx'
 
 const PAGE_STEPS: StepId[] = ['step1-1', 'step1-2', 'step1-3']
@@ -47,8 +48,8 @@ function Step1AreasBody({ page, stepId }: { page: 1 | 2 | 3; stepId: StepId }) {
     <>
       <StepHeading kicker={`1단계 · ${page}/3화면`} title="삶의 영역 평가">
         <p>
-          각 영역에서 나에게 중요한 정도와 현재 만족하는 정도를 1부터 7까지 표시해 주세요. 정답이
-          있는 검사가 아닙니다.
+          현재의 삶을 돌아보는 과정입니다. 각 영역에서 나에게 중요한 정도와 현재 만족하는 정도를
+          1부터 7까지 표시해 주세요. 정답은 없으며, 숫자의 높고 낮음이 좋고 나쁨을 뜻하지 않습니다.
         </p>
       </StepHeading>
       {error ? <Notice tone="error">{error}</Notice> : null}
@@ -65,14 +66,15 @@ function Step1AreasBody({ page, stepId }: { page: 1 | 2 | 3; stepId: StepId }) {
                 name={`${area.id}-importance`}
                 label={`${area.name} 중요도`}
                 value={score.importance}
-                onChange={(value) =>
+                onChange={(value) => {
                   dispatch({
                     type: 'SET_AREA_SCORE',
                     areaId: area.id,
                     field: 'importance',
                     value,
                   })
-                }
+                  trackLifeDesignStarted(state, () => dispatch({ type: 'MARK_USAGE_STARTED' }))
+                }}
                 lowLabel="덜 중요"
                 highLabel="매우 중요"
               />
@@ -81,14 +83,15 @@ function Step1AreasBody({ page, stepId }: { page: 1 | 2 | 3; stepId: StepId }) {
                 name={`${area.id}-satisfaction`}
                 label={`${area.name} 만족도`}
                 value={score.satisfaction}
-                onChange={(value) =>
+                onChange={(value) => {
                   dispatch({
                     type: 'SET_AREA_SCORE',
                     areaId: area.id,
                     field: 'satisfaction',
                     value,
                   })
-                }
+                  trackLifeDesignStarted(state, () => dispatch({ type: 'MARK_USAGE_STARTED' }))
+                }}
                 lowLabel="불만족"
                 highLabel="매우 만족"
               />
@@ -100,7 +103,7 @@ function Step1AreasBody({ page, stepId }: { page: 1 | 2 | 3; stepId: StepId }) {
       <StepNav
         backTo={page === 1 ? '/' : `/step/1/${page - 1}`}
         backLabel={page === 1 ? '처음으로' : '이전 화면'}
-        nextLabel={page === 3 ? '결과 보기' : '다음 화면'}
+        nextLabel={page === 3 ? '자기성찰 결과 보기' : '다음 화면'}
         onNext={goNext}
       />
     </>

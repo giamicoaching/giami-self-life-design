@@ -2,6 +2,7 @@ import { fireEvent, render, screen } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
 import { afterEach, describe, expect, it, vi } from 'vitest'
 import { HomePage } from '../pages/HomePage.tsx'
+import { DemographicsPage } from '../pages/DemographicsPage.tsx'
 import { Step1AreasPage } from '../pages/Step1AreasPage.tsx'
 import { ProgramProvider } from '../state/ProgramProvider.tsx'
 import { RESET_CONFIRM_DESCRIPTION, RESET_CONFIRM_LABEL } from '../state/useStartOver.ts'
@@ -18,6 +19,7 @@ function renderHome(storage = createMemoryStorage()) {
       <ProgramProvider storage={storage}>
         <Routes>
           <Route path="/" element={<HomePage />} />
+          <Route path="/info" element={<DemographicsPage />} />
           <Route path="/step/1/:screen" element={<Step1AreasPage />} />
         </Routes>
       </ProgramProvider>
@@ -33,9 +35,9 @@ describe('start over from home', () => {
 
   it('shows continue and start-over when saved answers exist', () => {
     renderHome()
-    expect(screen.getByRole('link', { name: '이어하기' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '이어하기' })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: '새로 시작하기' })).toBeInTheDocument()
-    expect(screen.queryByRole('link', { name: '시작하기' })).not.toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '생애설계 시작하기' })).not.toBeInTheDocument()
   })
 
   it('keeps saved answers when the confirm dialog is cancelled', () => {
@@ -44,21 +46,25 @@ describe('start over from home', () => {
     expect(screen.getByRole('dialog')).toHaveTextContent(RESET_CONFIRM_DESCRIPTION)
     fireEvent.click(screen.getByRole('button', { name: '취소' }))
     expect(screen.queryByRole('dialog')).not.toBeInTheDocument()
-    expect(screen.getByRole('link', { name: '이어하기' })).toBeInTheDocument()
+    expect(screen.getByRole('button', { name: '이어하기' })).toBeInTheDocument()
     expect(loadProgramState(storage)?.priorityReason).toBe(OLD_REASON)
   })
 
-  it('clears storage and state, then opens step 1 when confirmed', () => {
+  it('clears storage and state, then opens basic info when confirmed', () => {
     const { storage } = renderHome()
     fireEvent.click(screen.getByRole('button', { name: '새로 시작하기' }))
     fireEvent.click(screen.getByRole('button', { name: RESET_CONFIRM_LABEL }))
-    expect(screen.getByRole('heading', { name: '삶의 영역 평가' })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: '이용정보 안내' })).toBeInTheDocument()
     expect(screen.queryByText(OLD_REASON)).not.toBeInTheDocument()
     expect(storage.getItem(STORAGE_KEY)).toBeNull()
     const loaded = loadProgramState(storage)
     expect(loaded).toBeNull()
-    const selectedScores = screen.queryAllByRole('radio', { checked: true })
-    expect(selectedScores).toHaveLength(0)
+    expect(screen.getByLabelText('만 나이')).toHaveValue('')
+    expect(screen.getByLabelText('만 나이')).not.toBeDisabled()
+    expect(screen.getByRole('radio', { name: '남성' })).not.toBeChecked()
+    expect(screen.getByRole('radio', { name: '여성' })).not.toBeChecked()
+    fireEvent.click(screen.getByRole('button', { name: '이전' }))
+    expect(screen.getByRole('button', { name: '생애설계 시작하기' })).toBeInTheDocument()
   })
 
   it('does not restore deleted answers after a simulated reload', async () => {

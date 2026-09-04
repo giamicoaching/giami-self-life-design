@@ -5,12 +5,21 @@ import { StepGuard } from '../components/StepGuard.tsx'
 import { StepHeading } from '../components/layout/ProgramShell.tsx'
 import { Button } from '../components/ui/Button.tsx'
 import { CompleteBanner } from '../components/ui/Feedback.tsx'
+import { Notice } from '../components/ui/Notice.tsx'
+import {
+  COACHING_CENTER_BODY,
+  COACHING_CENTER_CTA,
+  COACHING_CENTER_TITLE,
+  COACHING_CENTER_URL,
+  WHEEL_RESULT_NOTICE,
+} from '../copy/programCopy.ts'
 import { composeActionSentence, composeCopingPlanNatural } from '../domain/actionSentence.ts'
 import { getLifeArea } from '../domain/lifeAreas.ts'
 import { SELF_CHECK_ITEMS, selfCheckAnswerLabel } from '../domain/selfChecks.ts'
 import { getCoreValue, HELP_RESOURCES } from '../domain/values.ts'
 import { isNoOrUnknownObstacle } from '../domain/validation.ts'
 import { ResetConfirmDialog } from '../components/ResetConfirmDialog.tsx'
+import { trackLifeDesignCompleted } from '../analytics/usage.ts'
 import { useProgram } from '../state/ProgramProvider.tsx'
 import { useSaveResult } from '../state/SaveToast.tsx'
 import { useStartOver } from '../state/useStartOver.ts'
@@ -63,8 +72,9 @@ function SummaryBody() {
   )
 
   const handleComplete = () => {
+    trackLifeDesignCompleted(state, () => dispatch({ type: 'MARK_USAGE_COMPLETED' }))
     dispatch({ type: 'MARK_COMPLETED' })
-    saveNow({ programCompleted: true })
+    saveNow({ programCompleted: true, usageCompletedTracked: true })
     setCompleted(true)
     window.requestAnimationFrame(() => {
       completeRef.current?.focus()
@@ -85,10 +95,13 @@ function SummaryBody() {
       <WheelPrintBlock
         title="삶의 수레바퀴"
         description={
-          <p>
-            만족도는 연한 색의 채워진 면과 실선, 중요도는 다른 색의 점선입니다. 각 축에 영역명과
-            점수가 있습니다.
-          </p>
+          <>
+            <Notice>{WHEEL_RESULT_NOTICE}</Notice>
+            <p>
+              만족도는 연한 색의 채워진 면과 실선, 중요도는 다른 색의 점선입니다. 각 축에 영역명과
+              중요도·만족도가 있습니다.
+            </p>
+          </>
         }
       >
         <LifeWheel state={state} titleId="summary-wheel-title" />
@@ -197,11 +210,24 @@ function SummaryBody() {
         <p className="preserve">자기격려: {state.selfEncouragement.trim() || '미작성'}</p>
       </section>
 
+      <aside className="coaching-invite" aria-labelledby="coaching-invite-title">
+        <h2 id="coaching-invite-title">{COACHING_CENTER_TITLE}</h2>
+        <p>{COACHING_CENTER_BODY}</p>
+        <a
+          className="btn btn-secondary coaching-invite-link"
+          href={COACHING_CENTER_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {COACHING_CENTER_CTA}
+        </a>
+      </aside>
+
       <div className="action-row no-print">
         <Button variant="secondary" onClick={() => navigate('/step/5')}>
           내용 수정하기
         </Button>
-        <Button variant="secondary" onClick={saveResult}>
+        <Button variant="secondary" onClick={() => saveResult('summary')}>
           결과 저장
         </Button>
         <Button variant="secondary" onClick={() => window.print()}>

@@ -65,7 +65,7 @@ function Step5Body() {
 
   return (
     <>
-      <StepHeading kicker="5단계" title="구체적 행동계획 수립">
+      <StepHeading kicker="5단계" title="나의 첫 행동">
         <p>
           목표를 위해 할 수 있는 행동을 최대 3개 적고, 가장 먼저 실행할 행동 1개를 고른 뒤 실행
           계획을 구체화합니다.

@@ -22,13 +22,13 @@ export const MAIN_STAGES: MainStage[] = [
   {
     id: 'goal',
     number: 4,
-    label: '목표 수립',
+    label: '나의 목표',
     stepIds: ['step4'],
   },
   {
     id: 'action',
     number: 5,
-    label: '구체적 행동계획 수립',
+    label: '나의 첫 행동',
     stepIds: ['step5'],
   },
   {

@@ -199,7 +199,7 @@ function Step3Body({ sub, stepId }: { sub: SubKey; stepId: StepId }) {
             onChange={(event) => dispatch({ type: 'SET_REFINED_CHANGE', text: event.target.value })}
             rows={7}
           />
-          <StepNav backTo="/step/3/core" nextLabel="목표 수립으로" onNext={goNext} />
+          <StepNav backTo="/step/3/core" nextLabel="나의 목표로" onNext={goNext} />
         </>
       ) : null}
     </>

@@ -39,7 +39,9 @@ function Step2Body() {
         </p>
       </StepHeading>
       <Notice>
-        지수는 참고정보입니다. 프로그램이 우선 영역을 대신 정하지 않습니다.
+        변화검토지수는 참고정보입니다. 가장 높은 영역을 반드시 선택할 필요는 없으며, 프로그램이
+        우선 삶의 영역을 자동으로 결정하지 않습니다. 현재 필요성·의미·변화 가능성을 고려하여 직접
+        선택해 주세요.
       </Notice>
       {error ? <Notice tone="error">{error}</Notice> : null}
       <fieldset className="area-choice">

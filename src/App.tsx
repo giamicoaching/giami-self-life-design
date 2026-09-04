@@ -1,5 +1,7 @@
 import { BrowserRouter, Navigate, Route, Routes } from 'react-router-dom'
+import { Analytics } from '@vercel/analytics/react'
 import { ProgramShell } from './components/layout/ProgramShell.tsx'
+import { DemographicsPage } from './pages/DemographicsPage.tsx'
 import { HomePage } from './pages/HomePage.tsx'
 import { Step1AreasPage } from './pages/Step1AreasPage.tsx'
 import { Step1ResultPage } from './pages/Step1ResultPage.tsx'
@@ -18,6 +20,7 @@ export default function App() {
         <SaveToastProvider>
           <Routes>
             <Route path="/" element={<HomePage />} />
+            <Route path="/info" element={<DemographicsPage />} />
             <Route element={<ProgramShell />}>
               <Route path="/step/1/result" element={<Step1ResultPage />} />
               <Route path="/step/1/:screen" element={<Step1AreasPage />} />
@@ -29,6 +32,7 @@ export default function App() {
             </Route>
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>
+          <Analytics />
         </SaveToastProvider>
       </ProgramProvider>
     </BrowserRouter>

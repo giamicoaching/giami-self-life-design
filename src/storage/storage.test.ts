@@ -18,6 +18,9 @@ function filledState() {
   }
   state.priorityAreaId = 'health'
   state.priorityReason = '건강이 다른 영역의 기반이라고 생각한다.'
+  state.ageInput = '67'
+  state.ageYears = 67
+  state.gender = 'female'
   state.lastVisitedStep = 'step2'
   return state
 }
@@ -32,6 +35,8 @@ describe('program storage', () => {
     expect(loaded?.areaScores.health.importance).toBe(6)
     expect(loaded?.areaScores.health.satisfaction).toBe(3)
     expect(loaded?.lastVisitedStep).toBe('step2')
+    expect(loaded?.ageYears).toBe(67)
+    expect(loaded?.gender).toBe('female')
     expect(loaded?.completedStepIds).toContain('step1-result')
     expect(loaded?.completedStepIds).toContain('step2')
   })
