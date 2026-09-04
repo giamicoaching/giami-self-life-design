@@ -15,26 +15,28 @@ import { SaveToastProvider } from './state/SaveToast.tsx'
 
 export default function App() {
   return (
-    <BrowserRouter>
-      <ProgramProvider>
-        <SaveToastProvider>
-          <Routes>
-            <Route path="/" element={<HomePage />} />
-            <Route path="/info" element={<DemographicsPage />} />
-            <Route element={<ProgramShell />}>
-              <Route path="/step/1/result" element={<Step1ResultPage />} />
-              <Route path="/step/1/:screen" element={<Step1AreasPage />} />
-              <Route path="/step/2" element={<Step2PriorityPage />} />
-              <Route path="/step/3/:sub" element={<Step3Page />} />
-              <Route path="/step/4" element={<Step4GoalPage />} />
-              <Route path="/step/5" element={<Step5ActionPage />} />
-              <Route path="/summary" element={<SummaryPage />} />
-            </Route>
-            <Route path="*" element={<Navigate to="/" replace />} />
-          </Routes>
-          <Analytics />
-        </SaveToastProvider>
-      </ProgramProvider>
-    </BrowserRouter>
+    <>
+      <BrowserRouter>
+        <ProgramProvider>
+          <SaveToastProvider>
+            <Routes>
+              <Route path="/" element={<HomePage />} />
+              <Route path="/info" element={<DemographicsPage />} />
+              <Route element={<ProgramShell />}>
+                <Route path="/step/1/result" element={<Step1ResultPage />} />
+                <Route path="/step/1/:screen" element={<Step1AreasPage />} />
+                <Route path="/step/2" element={<Step2PriorityPage />} />
+                <Route path="/step/3/:sub" element={<Step3Page />} />
+                <Route path="/step/4" element={<Step4GoalPage />} />
+                <Route path="/step/5" element={<Step5ActionPage />} />
+                <Route path="/summary" element={<SummaryPage />} />
+              </Route>
+              <Route path="*" element={<Navigate to="/" replace />} />
+            </Routes>
+          </SaveToastProvider>
+        </ProgramProvider>
+      </BrowserRouter>
+      <Analytics />
+    </>
   )
 }
