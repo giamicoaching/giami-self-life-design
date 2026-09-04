@@ -11,6 +11,7 @@ import {
   COACHING_CENTER_CTA,
   COACHING_CENTER_TITLE,
   COACHING_CENTER_URL,
+  COPYRIGHT_PRINT_LINE,
   WHEEL_RESULT_NOTICE,
 } from '../copy/programCopy.ts'
 import { composeActionSentence, composeCopingPlanNatural } from '../domain/actionSentence.ts'
@@ -223,11 +224,13 @@ function SummaryBody() {
         </a>
       </aside>
 
+      <p className="print-only print-credit">{COPYRIGHT_PRINT_LINE}</p>
+
       <div className="action-row no-print">
         <Button variant="secondary" onClick={() => navigate('/step/5')}>
           내용 수정하기
         </Button>
-        <Button variant="secondary" onClick={() => saveResult('summary')}>
+        <Button variant="secondary" onClick={() => saveResult()}>
           결과 저장
         </Button>
         <Button variant="secondary" onClick={() => window.print()}>

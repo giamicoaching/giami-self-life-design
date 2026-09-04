@@ -1,7 +1,6 @@
-import { fireEvent, render, screen, within } from '@testing-library/react'
+import { fireEvent, render, screen, waitFor, within } from '@testing-library/react'
 import { MemoryRouter, Route, Routes } from 'react-router-dom'
-import { afterEach, describe, expect, it, vi } from 'vitest'
-import { track } from '@vercel/analytics'
+import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest'
 import { resetUsageEventLocks } from '../analytics/usage.ts'
 import {
   DEMOGRAPHICS_NOTICE,
@@ -15,11 +14,33 @@ import { Step1AreasPage } from '../pages/Step1AreasPage.tsx'
 import { SummaryPage } from '../pages/SummaryPage.tsx'
 import { ProgramProvider } from '../state/ProgramProvider.tsx'
 import { SaveToastProvider } from '../state/SaveToast.tsx'
+import { RESET_CONFIRM_LABEL } from '../state/useStartOver.ts'
+import { getSupabaseClient } from '../supabase/client.ts'
 import { loadProgramState, saveProgramState } from '../storage/storage.ts'
 import { createMemoryStorage } from '../storage/memoryStorage.ts'
 import { createReadySummaryState } from './fixtures.ts'
 
-const trackMock = vi.mocked(track)
+const insertMock = vi.fn()
+const fromMock = vi.fn(() => ({ insert: insertMock }))
+const getSupabaseClientMock = vi.mocked(getSupabaseClient)
+
+function mockInsert(result: unknown = { error: null }) {
+  insertMock.mockReset()
+  fromMock.mockClear()
+  if (result instanceof Error) {
+    insertMock.mockRejectedValue(result)
+  } else {
+    insertMock.mockResolvedValue(result)
+  }
+  fromMock.mockImplementation(() => ({ insert: insertMock }))
+  getSupabaseClientMock.mockReturnValue({
+    from: fromMock,
+  } as never)
+}
+
+function insertedRows() {
+  return insertMock.mock.calls.map((call) => call[0] as Record<string, unknown>)
+}
 
 function renderHome(storage = createMemoryStorage()) {
   render(
@@ -55,9 +76,13 @@ function startProgram() {
 }
 
 describe('home demographics and usage events', () => {
+  beforeEach(() => {
+    mockInsert()
+  })
+
   afterEach(() => {
     resetUsageEventLocks()
-    trackMock.mockClear()
+    getSupabaseClientMock.mockReturnValue(null)
   })
 
   it('shows the confirmed notice and not 기타', () => {
@@ -99,41 +124,58 @@ describe('home demographics and usage events', () => {
     fireEvent.click(screen.getByRole('radio', { name: '남성' }))
     fireEvent.click(screen.getByRole('button', { name: DEMOGRAPHICS_NEXT_LABEL }))
     expect(screen.getByText('만 나이는 18세 이상 100세 이하의 숫자로 입력해 주세요.')).toBeInTheDocument()
-    expect(trackMock).not.toHaveBeenCalled()
+    expect(insertMock).not.toHaveBeenCalled()
   })
 
-  it('sends started with only age_group and gender, never exact age or answers', () => {
+  it('sends started with only run_id, event_name, age_group, and gender', async () => {
     const storage = renderHome()
     startProgram()
-    expect(trackMock).toHaveBeenCalledTimes(1)
-    expect(trackMock).toHaveBeenCalledWith('life_design_started', {
+    await waitFor(() => expect(insertMock).toHaveBeenCalledTimes(1))
+    expect(fromMock).toHaveBeenCalledWith('life_design_events')
+    const payload = insertedRows()[0]
+    expect(payload).toMatchObject({
+      event_name: 'life_design_started',
       age_group: '65-69',
       gender: 'female',
     })
-    const payload = trackMock.mock.calls[0]?.[1] as Record<string, unknown>
-    expect(Object.keys(payload).sort()).toEqual(['age_group', 'gender'])
-    expect(JSON.stringify(payload)).not.toContain('67')
+    expect(Object.keys(payload).sort()).toEqual(['age_group', 'event_name', 'gender', 'run_id'])
+    expect(JSON.stringify({ ...payload, run_id: undefined })).not.toContain('67')
     expect(JSON.stringify(payload)).not.toContain('건강')
+    expect(JSON.stringify(payload)).not.toContain('ageYears')
     expect(loadProgramState(storage)?.ageYears).toBe(67)
+    expect(loadProgramState(storage)?.runId).toBe(payload.run_id)
   })
 
-  it('does not send started twice in the same run', () => {
+  it('does not send started twice in the same run', async () => {
     renderHome()
     startProgram()
+    await waitFor(() => expect(insertMock).toHaveBeenCalledTimes(1))
     const importance = screen.getByRole('radiogroup', { name: '자아·성장 중요도' })
     fireEvent.click(within(importance).getByRole('radio', { name: '5' }))
-    expect(trackMock.mock.calls.filter((call) => call[0] === 'life_design_started')).toHaveLength(1)
+    expect(insertedRows().filter((row) => row.event_name === 'life_design_started')).toHaveLength(1)
+  })
+
+  it('keeps going when the stats insert fails', async () => {
+    mockInsert(new Error('network'))
+    renderHome()
+    startProgram()
+    expect(screen.getByRole('heading', { name: '삶의 영역 평가' })).toBeInTheDocument()
+    expect(screen.queryByText(/network|supabase|publishable|key/i)).not.toBeInTheDocument()
+    await waitFor(() => expect(insertMock).toHaveBeenCalled())
   })
 })
 
 describe('completed and saved usage events', () => {
+  beforeEach(() => {
+    mockInsert()
+  })
+
   afterEach(() => {
     resetUsageEventLocks()
-    trackMock.mockClear()
+    getSupabaseClientMock.mockReturnValue(null)
   })
 
-  it('sends completed once with only age_group and gender', () => {
-    const storage = createMemoryStorage()
+  function renderSummary(storage = createMemoryStorage()) {
     saveProgramState(createReadySummaryState(), storage)
     render(
       <MemoryRouter initialEntries={['/summary']}>
@@ -144,30 +186,72 @@ describe('completed and saved usage events', () => {
         </ProgramProvider>
       </MemoryRouter>,
     )
+    return storage
+  }
+
+  it('sends completed once with only anonymous fields', async () => {
+    const storage = renderSummary()
     fireEvent.click(screen.getByRole('button', { name: '생애설계 완료' }))
     fireEvent.click(screen.getByRole('button', { name: '생애설계 완료' }))
-    const completed = trackMock.mock.calls.filter((call) => call[0] === 'life_design_completed')
+    await waitFor(() => expect(insertMock).toHaveBeenCalled())
+    const completed = insertedRows().filter((row) => row.event_name === 'life_design_completed')
     expect(completed).toHaveLength(1)
-    expect(completed[0]?.[1]).toEqual({ age_group: '65-69', gender: 'female' })
-    expect(JSON.stringify(completed[0]?.[1])).not.toContain('주 3회')
+    expect(completed[0]).toMatchObject({
+      event_name: 'life_design_completed',
+      age_group: '65-69',
+      gender: 'female',
+    })
+    expect(Object.keys(completed[0] ?? {}).sort()).toEqual(['age_group', 'event_name', 'gender', 'run_id'])
+    expect(JSON.stringify(completed[0])).not.toContain('주 3회')
+    expect(JSON.stringify({ ...completed[0], run_id: undefined })).not.toContain('67')
+    expect(loadProgramState(storage)?.programCompleted).toBe(true)
   })
 
-  it('sends result_saved with only screen', () => {
-    const storage = createMemoryStorage()
-    saveProgramState(createReadySummaryState(), storage)
-    render(
-      <MemoryRouter initialEntries={['/summary']}>
-        <ProgramProvider storage={storage}>
-          <SaveToastProvider>
-            <SummaryPage />
-          </SaveToastProvider>
-        </ProgramProvider>
-      </MemoryRouter>,
-    )
+  it('sends result_saved once on the first save click', async () => {
+    renderSummary()
     fireEvent.click(screen.getByRole('button', { name: '결과 저장' }))
-    const saved = trackMock.mock.calls.filter((call) => call[0] === 'result_saved')
+    fireEvent.click(screen.getByRole('button', { name: '결과 저장' }))
+    await waitFor(() => expect(insertMock).toHaveBeenCalled())
+    const saved = insertedRows().filter((row) => row.event_name === 'result_saved')
     expect(saved).toHaveLength(1)
-    expect(saved[0]?.[1]).toEqual({ screen: 'summary' })
-    expect(Object.keys(saved[0]?.[1] as object)).toEqual(['screen'])
+    expect(Object.keys(saved[0] ?? {}).sort()).toEqual(['age_group', 'event_name', 'gender', 'run_id'])
+    expect(saved[0]).not.toHaveProperty('screen')
+  })
+
+  it('treats a unique constraint error as already saved and still completes', async () => {
+    mockInsert({ error: { code: '23505', message: 'duplicate key' } })
+    const storage = renderSummary()
+    fireEvent.click(screen.getByRole('button', { name: '생애설계 완료' }))
+    expect(screen.getByText('자기주도 생애설계를 완료했습니다.')).toBeInTheDocument()
+    expect(screen.queryByText(/duplicate|23505/i)).not.toBeInTheDocument()
+    expect(loadProgramState(storage)?.programCompleted).toBe(true)
+    await waitFor(() => expect(insertMock).toHaveBeenCalled())
+  })
+})
+
+describe('run_id across a new start', () => {
+  beforeEach(() => {
+    mockInsert()
+  })
+
+  afterEach(() => {
+    resetUsageEventLocks()
+    getSupabaseClientMock.mockReturnValue(null)
+  })
+
+  it('creates a new run_id after confirming 새로 시작하기', async () => {
+    const storage = createMemoryStorage()
+    const previous = createReadySummaryState()
+    saveProgramState(previous, storage)
+    renderHome(storage)
+    fireEvent.click(screen.getByRole('button', { name: '새로 시작하기' }))
+    fireEvent.click(screen.getByRole('button', { name: RESET_CONFIRM_LABEL }))
+    fillValidDemographics()
+    fireEvent.click(screen.getByRole('button', { name: DEMOGRAPHICS_NEXT_LABEL }))
+    await waitFor(() => expect(insertMock).toHaveBeenCalled())
+    const payload = insertedRows()[0]
+    expect(payload.event_name).toBe('life_design_started')
+    expect(payload.run_id).not.toBe(previous.runId)
+    expect(loadProgramState(storage)?.runId).toBe(payload.run_id)
   })
 })

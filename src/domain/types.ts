@@ -98,8 +98,10 @@ export interface ProgramState {
   ageYears: number | null
   ageDeclined: boolean
   gender: GenderId | null
+  runId: string
   usageStartedTracked: boolean
   usageCompletedTracked: boolean
+  usageSavedTracked: boolean
   areaScores: Record<LifeAreaId, AreaScore>
   priorityAreaId: LifeAreaId | null
   priorityReason: string

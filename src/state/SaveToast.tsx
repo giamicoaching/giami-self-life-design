@@ -9,25 +9,28 @@ import {
   type ReactNode,
 } from 'react'
 import { useProgram } from './ProgramProvider.tsx'
-import { trackResultSaved, type ResultSaveScreen } from '../analytics/usage.ts'
+import { trackResultSaved } from '../analytics/usage.ts'
 
 export const SAVE_TOAST_MESSAGE = '결과가 저장되었습니다.'
 export const SAVE_TOAST_DURATION_MS = 3000
 
 interface SaveToastContextValue {
-  saveResult: (screen: ResultSaveScreen) => void
+  saveResult: () => void
 }
 
 const SaveToastContext = createContext<SaveToastContextValue | null>(null)
 
 export function SaveToastProvider({ children }: { children: ReactNode }) {
-  const { saveNow } = useProgram()
+  const { state, dispatch, saveNow } = useProgram()
   const [visible, setVisible] = useState(false)
   const timerRef = useRef<number | null>(null)
 
-  const saveResult = useCallback((screen: ResultSaveScreen) => {
+  const saveResult = useCallback(() => {
     saveNow()
-    trackResultSaved(screen)
+    trackResultSaved(state, () => {
+      dispatch({ type: 'MARK_USAGE_SAVED' })
+      saveNow({ usageSavedTracked: true })
+    })
     setVisible(true)
     if (timerRef.current !== null) {
       window.clearTimeout(timerRef.current)
@@ -36,7 +39,7 @@ export function SaveToastProvider({ children }: { children: ReactNode }) {
       setVisible(false)
       timerRef.current = null
     }, SAVE_TOAST_DURATION_MS)
-  }, [saveNow])
+  }, [dispatch, saveNow, state])
 
   useEffect(() => {
     return () => {
@@ -64,7 +67,7 @@ export function SaveToastProvider({ children }: { children: ReactNode }) {
   )
 }
 
-export function useSaveResult(): (screen: ResultSaveScreen) => void {
+export function useSaveResult(): () => void {
   const value = useContext(SaveToastContext)
   if (!value) {
     throw new Error('useSaveResult must be used within SaveToastProvider')

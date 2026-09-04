@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { trackLifeDesignStarted } from '../analytics/usage.ts'
 import { StepHeading, StepNav } from '../components/layout/ProgramShell.tsx'
+import { SiteFooter } from '../components/SiteFooter.tsx'
 import { parseExactAge } from '../domain/ageGroup.ts'
 import {
   AGE_INVALID_MESSAGE,
@@ -124,6 +125,7 @@ export function DemographicsPage() {
           onNext={goNext}
         />
       </main>
+      <SiteFooter />
     </div>
   )
 }

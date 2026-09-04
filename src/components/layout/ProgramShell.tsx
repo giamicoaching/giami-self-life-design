@@ -3,6 +3,7 @@ import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { getMainStageByStep, getStepProgress, pathToStepId } from '../../domain/steps.ts'
 import { useProgram } from '../../state/ProgramProvider.tsx'
 import { ProgressHeader } from './ProgressHeader.tsx'
+import { SiteFooter } from '../SiteFooter.tsx'
 
 export function ProgramShell() {
   const location = useLocation()
@@ -37,6 +38,7 @@ export function ProgramShell() {
       <main className="sheet">
         <Outlet />
       </main>
+      <SiteFooter />
     </div>
   )
 }

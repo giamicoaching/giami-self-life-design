@@ -92,6 +92,8 @@ select {
   margin: 0 auto;
   min-height: 100svh;
   padding: 0 12px 48px;
+  display: flex;
+  flex-direction: column;
 }
 
 .home-frame {
@@ -649,6 +651,89 @@ textarea.input {
   background: rgba(20, 36, 28, 0.45);
 }
 
+.copyright-dialog {
+  width: min(560px, calc(100% - 24px));
+  max-height: min(85svh, 720px);
+  padding: 0;
+  overflow: hidden;
+}
+
+.copyright-dialog-panel {
+  display: flex;
+  flex-direction: column;
+  max-height: min(85svh, 720px);
+}
+
+.copyright-dialog h2 {
+  margin: 0;
+  padding: 20px 20px 8px;
+}
+
+.copyright-dialog-body {
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  -webkit-overflow-scrolling: touch;
+  padding: 4px 20px 8px;
+}
+
+.copyright-dialog-body p {
+  margin: 0 0 0.85rem;
+  font-size: 1rem;
+  line-height: 1.7;
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
+.copyright-author {
+  color: var(--muted);
+}
+
+.copyright-dialog .dialog-actions {
+  padding: 8px 20px 20px;
+  justify-content: flex-end;
+}
+
+.site-footer {
+  margin-top: auto;
+  padding: 16px 4px 0;
+  text-align: center;
+  color: var(--muted);
+  font-size: 0.82rem;
+  line-height: 1.5;
+}
+
+.site-footer p {
+  margin: 0;
+  word-break: keep-all;
+}
+
+.site-footer-link {
+  display: inline-block;
+  margin-top: 4px;
+  padding: 0;
+  border: 0;
+  background: none;
+  color: var(--accent);
+  font: inherit;
+  font-size: 0.82rem;
+  text-decoration: underline;
+  text-underline-offset: 2px;
+  cursor: pointer;
+}
+
+.site-footer-link:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--accent) 55%, white);
+  outline-offset: 2px;
+}
+
+.print-credit {
+  margin: 16px 0 0;
+  color: var(--muted);
+  font-size: 0.82rem;
+  text-align: center;
+  word-break: keep-all;
+}
+
 .sr-only {
   position: absolute;
   width: 1px;
@@ -861,6 +946,11 @@ textarea.input {
   .coaching-invite-link {
     width: 100%;
   }
+
+  .copyright-dialog,
+  .copyright-dialog-panel {
+    max-height: min(90svh, 720px);
+  }
 }
 
 @media print {
@@ -940,6 +1030,13 @@ textarea.input {
   .coaching-invite-link {
     width: auto;
     max-width: 100%;
+  }
+
+  .print-credit {
+    display: block;
+    margin-top: 8mm;
+    font-size: 9pt;
+    color: #44554c;
   }
 
   .wheel-satisfaction {

@@ -1,6 +1,7 @@
 import { LIFE_AREA_IDS } from './types.ts'
 import type { AreaScore, LifeAreaId, ProgramState } from './types.ts'
 import { hasCompleteDemographics } from './demographics.ts'
+import { createRunId } from './runId.ts'
 
 function emptyScore(): AreaScore {
   return { importance: null, satisfaction: null }
@@ -24,8 +25,10 @@ export function createInitialState(): ProgramState {
     ageYears: null,
     ageDeclined: false,
     gender: null,
+    runId: createRunId(),
     usageStartedTracked: false,
     usageCompletedTracked: false,
+    usageSavedTracked: false,
     areaScores: emptyAreaScores(),
     priorityAreaId: null,
     priorityReason: '',

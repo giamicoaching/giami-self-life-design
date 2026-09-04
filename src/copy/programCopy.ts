@@ -23,3 +23,19 @@ export const COACHING_CENTER_BODY =
   '지아미라이프코칭센터는 심리학과 코칭 전문성을 바탕으로 삶의 방향을 구체화하고, 목표를 실제 행동으로 이어가도록 지원합니다.'
 export const COACHING_CENTER_CTA = '지아미라이프코칭센터 알아보기'
 export const COACHING_CENTER_URL = 'https://giamicoaching.com'
+
+export const COPYRIGHT_LINE = '© 2026 탁진국 · 지아미라이프코칭센터'
+export const COPYRIGHT_NOTICE_LINK = '저작권·이용안내'
+export const COPYRIGHT_NOTICE_TITLE = '저작권·이용안내'
+export const COPYRIGHT_NOTICE_PARAGRAPHS = [
+  '‘지아미 자기주도 생애설계’는 탁진국이 개발한 자기성찰 및 생애설계 프로그램입니다.',
+  '이 프로그램은 삶의 여러 영역을 돌아보고, 자신이 우선적으로 변화시키고 싶은 영역과 삶의 방향이 되는 가치를 선택한 뒤, 구체적인 목표와 첫 행동을 스스로 설계하도록 구성되었습니다.',
+  '개인은 본 프로그램을 무료로 이용할 수 있습니다. 코치와 강사는 코칭 및 교육 장면에서 출처를 표시하고 무료로 활용할 수 있습니다.',
+  '프로그램의 전체 또는 일부를 출처 없이 복제·재배포하거나, 원자료 또는 프로그램 자체를 별도의 상품으로 판매하는 행위는 허용되지 않습니다. 수정·재가공하여 배포하거나 상업적 서비스에 활용하려는 경우에는 저작자와 사전에 협의해 주세요.',
+  '본 프로그램은 개인을 진단하거나 평가하기 위한 검사가 아니라, 현재의 삶을 돌아보고 앞으로의 방향과 행동을 스스로 설계하도록 돕는 자기성찰 도구입니다.',
+] as const
+export const COPYRIGHT_AUTHOR_NAME = '탁진국'
+export const COPYRIGHT_AUTHOR_ORG = '지아미라이프코칭센터'
+export const COPYRIGHT_CLOSE_LABEL = '닫기'
+export const COPYRIGHT_PRINT_LINE =
+  '지아미 자기주도 생애설계 | 개발: 탁진국 | © 2026 지아미라이프코칭센터'

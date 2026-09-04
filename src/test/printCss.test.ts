@@ -33,4 +33,12 @@ describe('print layout rules', () => {
     expect(css).not.toMatch(/\.no-print[^{]*\.coaching-invite/)
     expect(css).not.toMatch(/\.coaching-invite[^{]*\.no-print/)
   })
+
+  it('prints the summary copyright credit and hides the on-screen footer', () => {
+    expect(css).toContain('.print-credit')
+    expect(css).toMatch(/@media print[\s\S]*\.print-credit/)
+    expect(css).toContain('.site-footer')
+    expect(css).not.toMatch(/\.no-print[^{]*\.print-credit/)
+    expect(css).not.toMatch(/\.print-credit[^{]*\.no-print/)
+  })
 })

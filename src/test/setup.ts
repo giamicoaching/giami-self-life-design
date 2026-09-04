@@ -3,12 +3,14 @@ import { cleanup } from '@testing-library/react'
 import { afterEach, vi } from 'vitest'
 import { resetUsageEventLocks } from '../analytics/usage.ts'
 
-vi.mock('@vercel/analytics', () => ({
-  track: vi.fn(),
-}))
-
 vi.mock('@vercel/analytics/react', () => ({
   Analytics: () => null,
+}))
+
+vi.mock('../supabase/client.ts', () => ({
+  LIFE_DESIGN_EVENTS_TABLE: 'life_design_events',
+  getSupabaseClient: vi.fn(() => null),
+  resetSupabaseClientCache: vi.fn(),
 }))
 
 afterEach(() => {

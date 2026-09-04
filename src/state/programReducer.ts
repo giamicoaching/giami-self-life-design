@@ -51,6 +51,7 @@ export type ProgramAction =
   | { type: 'SET_GENDER'; gender: GenderId }
   | { type: 'MARK_USAGE_STARTED' }
   | { type: 'MARK_USAGE_COMPLETED' }
+  | { type: 'MARK_USAGE_SAVED' }
   | { type: 'SET_LAST_VISITED'; step: StepId }
   | { type: 'MARK_COMPLETED' }
   | { type: 'RESET' }
@@ -83,6 +84,8 @@ export function programReducer(state: ProgramState, action: ProgramAction): Prog
       return { ...state, usageStartedTracked: true }
     case 'MARK_USAGE_COMPLETED':
       return { ...state, usageCompletedTracked: true }
+    case 'MARK_USAGE_SAVED':
+      return { ...state, usageSavedTracked: true }
     case 'MARK_COMPLETED':
       return { ...state, programCompleted: true }
     case 'SET_AREA_SCORE':

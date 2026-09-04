@@ -3,6 +3,7 @@ import type { HelpResourceId, LifeAreaId, ProgramState, StepId, ValueId } from '
 import { parseExactAge } from '../domain/ageGroup.ts'
 import { isGenderId } from '../domain/demographics.ts'
 import { createInitialState } from '../domain/initialState.ts'
+import { createRunId, isRunId } from '../domain/runId.ts'
 import { deriveCompletedSteps } from '../domain/validation.ts'
 
 export const STORAGE_KEY = 'giami.lifeDesign.v1'
@@ -106,8 +107,10 @@ export function parseProgramState(raw: unknown): ProgramState | null {
     ageYears,
     ageDeclined,
     gender: isGenderId(raw.gender) ? raw.gender : null,
+    runId: isRunId(raw.runId) ? raw.runId : createRunId(),
     usageStartedTracked: raw.usageStartedTracked === true,
     usageCompletedTracked: raw.usageCompletedTracked === true,
+    usageSavedTracked: raw.usageSavedTracked === true,
     areaScores: parseAreaScores(raw.areaScores),
     priorityAreaId: isLifeAreaId(raw.priorityAreaId) ? raw.priorityAreaId : null,
     priorityReason: asString(raw.priorityReason),

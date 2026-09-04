@@ -15,8 +15,8 @@ export const AGE_GROUPS = [
   '65-69',
   '70-74',
   '75-79',
-  '80-plus',
-  'declined',
+  '80+',
+  'not_provided',
 ] as const
 
 export type AgeGroup = (typeof AGE_GROUPS)[number]
@@ -37,13 +37,13 @@ export function parseExactAge(raw: string): number | null {
 export function toAgeGroup(age: number): AgeGroup | null {
   if (!isValidExactAge(age)) return null
   if (age <= 19) return '18-19'
-  if (age >= 80) return '80-plus'
+  if (age >= 80) return '80+'
   const start = Math.floor(age / 5) * 5
   return `${start}-${start + 4}` as AgeGroup
 }
 
 export function analyticsAgeGroup(ageYears: number | null, declined: boolean): AgeGroup | null {
-  if (declined) return 'declined'
+  if (declined) return 'not_provided'
   if (ageYears === null) return null
   return toAgeGroup(ageYears)
 }

@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom'
 import { trackLifeDesignStarted } from '../analytics/usage.ts'
 import { HomeHeroGraphic } from '../components/HomeHeroGraphic.tsx'
 import { ResetConfirmDialog } from '../components/ResetConfirmDialog.tsx'
+import { SiteFooter } from '../components/SiteFooter.tsx'
 import { Button } from '../components/ui/Button.tsx'
 import {
   HOME_BRAND,
@@ -71,6 +72,7 @@ export function HomePage() {
           </div>
         </div>
       </main>
+      <SiteFooter />
       <ResetConfirmDialog
         open={confirmReset}
         onCancel={() => setConfirmReset(false)}

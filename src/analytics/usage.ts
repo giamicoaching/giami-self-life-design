@@ -1,65 +1,70 @@
-import { track } from '@vercel/analytics'
-import { analyticsAgeGroup, type AgeGroup } from '../domain/ageGroup.ts'
-import { hasCompleteDemographics } from '../domain/demographics.ts'
-import type { GenderId, ProgramState } from '../domain/types.ts'
+import { LIFE_DESIGN_EVENTS_TABLE, getSupabaseClient } from '../supabase/client.ts'
+import type { ProgramState } from '../domain/types.ts'
+import { USAGE_EVENTS, buildUsageEvent, type UsageEventRow } from './payload.ts'
 
-export const USAGE_EVENTS = {
-  started: 'life_design_started',
-  completed: 'life_design_completed',
-  saved: 'result_saved',
-} as const
+export { USAGE_EVENTS }
+export type { UsageEventRow }
 
-export type ResultSaveScreen = 'step1-result' | 'summary'
+const UNIQUE_VIOLATION = '23505'
 
 let startedLock = false
 let completedLock = false
+let savedLock = false
 
 export function resetUsageEventLocks(): void {
   startedLock = false
   completedLock = false
+  savedLock = false
 }
 
-function safeTrack(name: string, properties: Record<string, string>): void {
-  try {
-    track(name, properties)
-  } catch {
-    // 개발 환경이나 스크립트 미주입 시에도 앱이 멈추지 않게 한다.
+function warnDev(message: string): void {
+  if (import.meta.env.DEV && import.meta.env.MODE !== 'test') {
+    console.warn(message)
   }
 }
 
-function usageDemographics(
-  state: ProgramState,
-): { age_group: AgeGroup; gender: GenderId } | null {
-  if (!hasCompleteDemographics(state) || state.gender === null) return null
-  const age_group = analyticsAgeGroup(state.ageYears, state.ageDeclined)
-  if (!age_group) return null
-  return { age_group, gender: state.gender }
+function isDuplicateEventError(error: { code?: string; message?: string }): boolean {
+  if (error.code === UNIQUE_VIOLATION) return true
+  const message = error.message?.toLowerCase() ?? ''
+  return message.includes('duplicate') || message.includes('unique')
 }
 
-export function trackLifeDesignStarted(
-  state: ProgramState,
-  markTracked: () => void,
-): void {
+async function persistUsageEvent(row: UsageEventRow): Promise<void> {
+  const client = getSupabaseClient()
+  if (!client) return
+  try {
+    const { error } = await client.from(LIFE_DESIGN_EVENTS_TABLE).insert(row)
+    if (!error) return
+    if (isDuplicateEventError(error)) return
+    warnDev('[usage] event insert failed')
+  } catch {
+    warnDev('[usage] event insert failed')
+  }
+}
+
+export function trackLifeDesignStarted(state: ProgramState, markTracked: () => void): void {
   if (state.usageStartedTracked || startedLock) return
-  const properties = usageDemographics(state)
-  if (!properties) return
+  const row = buildUsageEvent(state, USAGE_EVENTS.started)
+  if (!row) return
   startedLock = true
-  safeTrack(USAGE_EVENTS.started, properties)
   markTracked()
+  void persistUsageEvent(row)
 }
 
-export function trackLifeDesignCompleted(
-  state: ProgramState,
-  markTracked: () => void,
-): void {
+export function trackLifeDesignCompleted(state: ProgramState, markTracked: () => void): void {
   if (state.usageCompletedTracked || completedLock) return
-  const properties = usageDemographics(state)
-  if (!properties) return
+  const row = buildUsageEvent(state, USAGE_EVENTS.completed)
+  if (!row) return
   completedLock = true
-  safeTrack(USAGE_EVENTS.completed, properties)
   markTracked()
+  void persistUsageEvent(row)
 }
 
-export function trackResultSaved(screen: ResultSaveScreen): void {
-  safeTrack(USAGE_EVENTS.saved, { screen })
+export function trackResultSaved(state: ProgramState, markTracked: () => void): void {
+  if (state.usageSavedTracked || savedLock) return
+  const row = buildUsageEvent(state, USAGE_EVENTS.saved)
+  if (!row) return
+  savedLock = true
+  markTracked()
+  void persistUsageEvent(row)
 }

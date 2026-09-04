@@ -28,7 +28,8 @@ function filledState() {
 describe('program storage', () => {
   it('saves and restores answers after a simulated reload', () => {
     const memory = createMemoryStorage()
-    saveProgramState(filledState(), memory)
+    const state = filledState()
+    saveProgramState(state, memory)
     const loaded = loadProgramState(memory)
     expect(loaded?.priorityAreaId).toBe('health')
     expect(loaded?.priorityReason).toContain('건강')
@@ -37,6 +38,8 @@ describe('program storage', () => {
     expect(loaded?.lastVisitedStep).toBe('step2')
     expect(loaded?.ageYears).toBe(67)
     expect(loaded?.gender).toBe('female')
+    expect(loaded?.runId).toBe(state.runId)
+    expect(loaded?.usageSavedTracked).toBe(false)
     expect(loaded?.completedStepIds).toContain('step1-result')
     expect(loaded?.completedStepIds).toContain('step2')
   })
@@ -58,6 +61,23 @@ describe('program storage', () => {
 
   it('rejects a different storage version instead of corrupting data', () => {
     expect(parseProgramState({ version: 2, goal: 'x' })).toBeNull()
+  })
+
+  it('restores older snapshots that have no runId or saved-tracking flag', () => {
+    const snapshot = JSON.parse(JSON.stringify(filledState())) as Record<string, unknown>
+    delete snapshot.runId
+    delete snapshot.usageSavedTracked
+    delete snapshot.usageStartedTracked
+    const restored = parseProgramState(snapshot)
+    expect(restored?.priorityAreaId).toBe('health')
+    expect(restored?.priorityReason).toContain('건강')
+    expect(restored?.ageYears).toBe(67)
+    expect(restored?.gender).toBe('female')
+    expect(restored?.runId).toMatch(
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-8][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i,
+    )
+    expect(restored?.usageSavedTracked).toBe(false)
+    expect(restored?.usageStartedTracked).toBe(false)
   })
 
   it('keeps the newer guest or remote copy when merging for login', () => {

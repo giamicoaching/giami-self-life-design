@@ -42,7 +42,7 @@ function Step1ResultBody() {
         <Button variant="secondary" onClick={() => navigate('/step/1/1')}>
           내용 수정하기
         </Button>
-        <Button variant="secondary" onClick={() => saveResult('step1-result')}>
+        <Button variant="secondary" onClick={() => saveResult()}>
           결과 저장
         </Button>
         <Button onClick={() => navigate('/step/2')}>우선 삶의 영역 선택</Button>
