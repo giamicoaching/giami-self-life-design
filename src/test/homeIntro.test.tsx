@@ -19,6 +19,7 @@ import {
   HOME_DURATION_NOTE,
   HOME_HERO_LABEL,
   HOME_INTRO,
+  HOME_REQUIRED_NOTE,
   HOME_RESTART_LABEL,
   HOME_START_LABEL,
 } from '../copy/programCopy.ts'
@@ -54,6 +55,7 @@ describe('intro home and demographics screens', () => {
     expect(screen.getByText(HOME_DURATION_NOTE)).toBeInTheDocument()
     expect(screen.getByRole('img', { name: HOME_HERO_LABEL })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: HOME_START_LABEL })).toBeInTheDocument()
+    expect(screen.getByText(HOME_REQUIRED_NOTE)).toBeInTheDocument()
     expect(screen.queryByRole('button', { name: HOME_CONTINUE_LABEL })).not.toBeInTheDocument()
     expect(screen.queryByRole('button', { name: HOME_RESTART_LABEL })).not.toBeInTheDocument()
     expect(screen.queryByText(DEMOGRAPHICS_NOTICE)).not.toBeInTheDocument()
@@ -99,6 +101,7 @@ describe('intro home and demographics screens', () => {
     expect(screen.queryByRole('button', { name: HOME_START_LABEL })).not.toBeInTheDocument()
     expect(screen.getByRole('button', { name: HOME_CONTINUE_LABEL })).toBeInTheDocument()
     expect(screen.getByRole('button', { name: HOME_RESTART_LABEL })).toBeInTheDocument()
+    expect(screen.getByText(HOME_REQUIRED_NOTE)).toBeInTheDocument()
     fireEvent.click(screen.getByRole('button', { name: HOME_CONTINUE_LABEL }))
     expect(screen.getByRole('heading', { name: '나의 생애설계' })).toBeInTheDocument()
   })

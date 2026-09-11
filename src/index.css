@@ -272,6 +272,16 @@ select {
   margin: 4px 0 0;
 }
 
+.home-required-note {
+  flex: 1 0 100%;
+  margin: 4px 0 0;
+  font-size: 0.95rem;
+  line-height: 1.5;
+  color: var(--muted);
+  word-break: keep-all;
+  overflow-wrap: break-word;
+}
+
 .privacy-note {
   margin: 8px 0 14px;
   font-size: 1rem;
@@ -996,6 +1006,10 @@ textarea.input {
 
   .home-duration-note {
     font-size: 0.84rem;
+  }
+
+  .home-required-note {
+    font-size: 0.95rem;
   }
 
   .privacy-note {

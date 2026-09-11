@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { createInitialState } from './initialState.ts'
 import { programReducer } from '../state/programReducer.ts'
+import { createReadySummaryState } from '../test/fixtures.ts'
 import {
   canSelectActionIndex,
   canVisitStep,
@@ -187,5 +188,23 @@ describe('missing field messages', () => {
     expect(getMissingFields(noneState, 'step5')).toEqual([])
     const unknownState = programReducer(state, { type: 'SET_OBSTACLE', text: '모름' })
     expect(getMissingFields(unknownState, 'step5')).toEqual([])
+  })
+
+  it('does not require optional goal, help, or encouragement fields', () => {
+    const state = createReadySummaryState()
+    state.goalPeriod = ''
+    state.goalCriteria = ''
+    state.helpResources = []
+    state.helpNote = ''
+    state.selfEncouragement = ''
+    state.selfChecks = {
+      trulyWanted: null,
+      areaValueReflected: null,
+      specific: null,
+      feasibleInPeriod: null,
+    }
+    expect(getMissingFields(state, 'step4').map((field) => field.id)).toEqual([])
+    expect(getMissingFields(state, 'step5').map((field) => field.id)).toEqual([])
+    expect(isStep5Complete(state)).toBe(true)
   })
 })

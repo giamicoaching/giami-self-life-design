@@ -1,4 +1,5 @@
 import type { ReactNode, TextareaHTMLAttributes, InputHTMLAttributes } from 'react'
+import { OPTIONAL_FIELD_MARK } from '../../copy/programCopy.ts'
 
 interface FieldProps {
   id: string
@@ -27,7 +28,7 @@ export function Field({
     >
       <label className="field-label" htmlFor={id}>
         {label}
-        {optional ? <span className="field-optional">선택</span> : null}
+        {optional ? <span className="field-optional">{OPTIONAL_FIELD_MARK}</span> : null}
       </label>
       {hint ? (
         <p className="field-hint" id={`${id}-hint`}>

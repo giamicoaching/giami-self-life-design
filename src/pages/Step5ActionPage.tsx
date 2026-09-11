@@ -9,6 +9,7 @@ import { QuestionBlock } from '../components/validation/QuestionBlock.tsx'
 import { useMissingResponses } from '../components/validation/useMissingResponses.ts'
 import { composeActionSentence, composeCopingPlanNatural } from '../domain/actionSentence.ts'
 import { ACTION_PLACEHOLDERS } from '../domain/examples.ts'
+import { OPTIONAL_FIELD_MARK } from '../copy/programCopy.ts'
 import { STEP_PATHS } from '../domain/steps.ts'
 import { HELP_RESOURCES } from '../domain/values.ts'
 import {
@@ -91,7 +92,7 @@ function Step5Body() {
           <TextArea
             key={index}
             id={index === 0 ? 'first-field' : `action-${index}`}
-            label={`할 수 있는 행동 ${index + 1}${index === 0 ? '' : ' (선택)'}`}
+            label={`할 수 있는 행동 ${index + 1}`}
             optional={index !== 0}
             placeholder={ACTION_PLACEHOLDERS[index]}
             value={state.actions[index]}
@@ -263,7 +264,9 @@ function Step5Body() {
         </article>
       ) : null}
       <fieldset className="stack">
-        <legend>도움이 될 사람·정보·자료·도구</legend>
+        <legend>
+          도움이 될 사람·정보·자료·도구 <span className="field-optional">{OPTIONAL_FIELD_MARK}</span>
+        </legend>
         {HELP_RESOURCES.map((resource) => (
           <label key={resource.id} className="check-line">
             <input

@@ -7,6 +7,7 @@ import { Scale } from '../components/ui/Scale.tsx'
 import { MissingResponseAlert } from '../components/validation/MissingResponseAlert.tsx'
 import { QuestionBlock } from '../components/validation/QuestionBlock.tsx'
 import { useMissingResponses } from '../components/validation/useMissingResponses.ts'
+import { OPTIONAL_FIELD_MARK } from '../copy/programCopy.ts'
 import { getLifeArea } from '../domain/lifeAreas.ts'
 import { SELF_CHECK_ITEMS } from '../domain/selfChecks.ts'
 import { STEP_PATHS } from '../domain/steps.ts'
@@ -145,7 +146,9 @@ function Step4Body() {
         highLabel="높음"
       />
       <section className="card">
-        <h2>자기점검</h2>
+        <h2>
+          자기점검 <span className="field-optional">{OPTIONAL_FIELD_MARK}</span>
+        </h2>
         <p className="muted">점검 내용은 참고정보입니다. 예 또는 아직 보완이 필요함으로 표시할 수 있습니다.</p>
         {SELF_CHECK_ITEMS.map((item) => (
           <fieldset key={item.key} className="check-row">

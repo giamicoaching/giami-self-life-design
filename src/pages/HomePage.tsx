@@ -11,6 +11,7 @@ import {
   HOME_DURATION,
   HOME_DURATION_NOTE,
   HOME_INTRO,
+  HOME_REQUIRED_NOTE,
   HOME_RESTART_LABEL,
   HOME_START_LABEL,
   HOME_TITLE_LINE_1,
@@ -69,6 +70,7 @@ export function HomePage() {
             ) : (
               <Button onClick={() => navigate(DEMOGRAPHICS_PATH)}>{HOME_START_LABEL}</Button>
             )}
+            <p className="home-required-note">{HOME_REQUIRED_NOTE}</p>
           </div>
         </div>
       </main>

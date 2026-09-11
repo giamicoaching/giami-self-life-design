@@ -9,6 +9,9 @@ export const HOME_START_LABEL = '생애설계 시작하기'
 export const HOME_CONTINUE_LABEL = '이어하기'
 export const HOME_RESTART_LABEL = '새로 시작하기'
 export const HOME_HERO_LABEL = '삶을 돌아보고 앞으로 나아가는 방향을 나타낸 그림'
+export const HOME_REQUIRED_NOTE =
+  '별도 표시가 없는 항목은 필수이며, 선택항목은 ‘(선택)’으로 표시됩니다.'
+export const OPTIONAL_FIELD_MARK = '(선택)'
 
 export const WHEEL_RESULT_NOTICE =
   '이 결과는 개인을 진단하거나 평가하기 위한 것이 아니라, 현재의 삶을 돌아보고 앞으로의 방향을 스스로 선택하도록 돕는 참고정보입니다.'

@@ -19,6 +19,7 @@ import {
   HOME_DURATION,
   HOME_DURATION_NOTE,
   HOME_INTRO,
+  HOME_REQUIRED_NOTE,
   HOME_START_LABEL,
   WHEEL_RESULT_NOTICE,
 } from './programCopy.ts'
@@ -50,6 +51,7 @@ describe('program copy', () => {
     expect(screen.getByText(HOME_DURATION)).toBeInTheDocument()
     expect(screen.getByText(HOME_DURATION_NOTE)).toBeInTheDocument()
     expect(screen.getByRole('button', { name: HOME_START_LABEL })).toBeInTheDocument()
+    expect(screen.getByText(HOME_REQUIRED_NOTE)).toBeInTheDocument()
     expect(screen.queryByText(/심리검사|타당화|신뢰도|정상·비정상|위험군/)).not.toBeInTheDocument()
     expect(screen.queryByText(/최경화|KWS/)).not.toBeInTheDocument()
   })
