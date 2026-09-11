@@ -1,6 +1,7 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
 export const LIFE_DESIGN_EVENTS_TABLE = 'life_design_events'
+export const LIFE_DESIGN_FEEDBACK_TABLE = 'life_design_feedback'
 
 function readConfig(): { url: string; key: string } | null {
   const url = import.meta.env.VITE_SUPABASE_URL

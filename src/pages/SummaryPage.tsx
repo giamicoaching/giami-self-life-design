@@ -25,6 +25,7 @@ import {
   isNoOrUnknownObstacle,
 } from '../domain/validation.ts'
 import { ResetConfirmDialog } from '../components/ResetConfirmDialog.tsx'
+import { SummaryFeedback } from '../components/SummaryFeedback.tsx'
 import { trackLifeDesignCompleted } from '../analytics/usage.ts'
 import { useProgram } from '../state/ProgramProvider.tsx'
 import { useSaveResult } from '../state/SaveToast.tsx'
@@ -221,21 +222,6 @@ function SummaryBody() {
         <p className="preserve">자기격려: {state.selfEncouragement.trim() || '미작성'}</p>
       </section>
 
-      <aside className="coaching-invite" aria-labelledby="coaching-invite-title">
-        <h2 id="coaching-invite-title">{COACHING_CENTER_TITLE}</h2>
-        <p>{COACHING_CENTER_BODY}</p>
-        <a
-          className="btn btn-secondary coaching-invite-link"
-          href={COACHING_CENTER_URL}
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          {COACHING_CENTER_CTA}
-        </a>
-      </aside>
-
-      <p className="print-only print-credit">{COPYRIGHT_PRINT_LINE}</p>
-
       <div className="action-row no-print">
         <Button variant="secondary" onClick={() => navigate('/step/5')}>
           내용 수정하기
@@ -251,6 +237,23 @@ function SummaryBody() {
         </Button>
         <Button onClick={handleComplete}>생애설계 완료</Button>
       </div>
+
+      <SummaryFeedback />
+
+      <aside className="coaching-invite" aria-labelledby="coaching-invite-title">
+        <h2 id="coaching-invite-title">{COACHING_CENTER_TITLE}</h2>
+        <p>{COACHING_CENTER_BODY}</p>
+        <a
+          className="btn btn-secondary coaching-invite-link"
+          href={COACHING_CENTER_URL}
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          {COACHING_CENTER_CTA}
+        </a>
+      </aside>
+
+      <p className="print-only print-credit">{COPYRIGHT_PRINT_LINE}</p>
 
       <ResetConfirmDialog
         open={confirmReset}

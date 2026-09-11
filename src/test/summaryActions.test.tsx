@@ -5,6 +5,7 @@ import {
   COACHING_CENTER_CTA,
   COACHING_CENTER_TITLE,
   COACHING_CENTER_URL,
+  FEEDBACK_TITLE,
 } from '../copy/programCopy.ts'
 import { SummaryPage } from '../pages/SummaryPage.tsx'
 import { ProgramProvider } from '../state/ProgramProvider.tsx'
@@ -59,7 +60,7 @@ describe('summary result actions', () => {
     expect(screen.getByText(/행동 2: 수면 일기 쓰기/)).toBeInTheDocument()
   })
 
-  it('places a secure coaching center invite after results and before save actions', () => {
+  it('places feedback after save actions and the coaching invite after feedback', () => {
     renderSummary()
     const inviteTitle = screen.getByRole('heading', { name: COACHING_CENTER_TITLE })
     const inviteLink = screen.getByRole('link', { name: COACHING_CENTER_CTA })
@@ -67,15 +68,18 @@ describe('summary result actions', () => {
     const save = screen.getByRole('button', { name: '결과 저장' })
     const print = screen.getByRole('button', { name: 'PDF 저장 또는 인쇄' })
     const complete = screen.getByRole('button', { name: '생애설계 완료' })
+    const feedback = screen.getByRole('heading', { name: FEEDBACK_TITLE })
 
     expect(inviteLink).toHaveAttribute('href', COACHING_CENTER_URL)
     expect(inviteLink).toHaveAttribute('target', '_blank')
     expect(inviteLink).toHaveAttribute('rel', 'noopener noreferrer')
     expect(inviteLink.closest('.no-print')).toBeNull()
     expect(save.closest('.no-print')).toBeTruthy()
+    expect(feedback.closest('.no-print')).toBeTruthy()
 
-    expect(firstAction.compareDocumentPosition(inviteTitle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
-    expect(inviteLink.compareDocumentPosition(save) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(firstAction.compareDocumentPosition(save) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(save.compareDocumentPosition(feedback) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
+    expect(feedback.compareDocumentPosition(inviteTitle) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy()
     expect(print).toBeInTheDocument()
     expect(complete).toBeInTheDocument()
   })

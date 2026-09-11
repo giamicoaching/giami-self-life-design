@@ -102,6 +102,7 @@ export interface ProgramState {
   usageStartedTracked: boolean
   usageCompletedTracked: boolean
   usageSavedTracked: boolean
+  feedbackSubmitted: boolean
   areaScores: Record<LifeAreaId, AreaScore>
   priorityAreaId: LifeAreaId | null
   priorityReason: string

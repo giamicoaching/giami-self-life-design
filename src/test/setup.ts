@@ -2,6 +2,7 @@ import '@testing-library/jest-dom/vitest'
 import { cleanup } from '@testing-library/react'
 import { afterEach, vi } from 'vitest'
 import { resetUsageEventLocks } from '../analytics/usage.ts'
+import { resetFeedbackSubmitLock } from '../analytics/submitFeedback.ts'
 
 vi.mock('@vercel/analytics/react', () => ({
   Analytics: () => null,
@@ -9,6 +10,7 @@ vi.mock('@vercel/analytics/react', () => ({
 
 vi.mock('../supabase/client.ts', () => ({
   LIFE_DESIGN_EVENTS_TABLE: 'life_design_events',
+  LIFE_DESIGN_FEEDBACK_TABLE: 'life_design_feedback',
   getSupabaseClient: vi.fn(() => null),
   resetSupabaseClientCache: vi.fn(),
 }))
@@ -16,6 +18,7 @@ vi.mock('../supabase/client.ts', () => ({
 afterEach(() => {
   cleanup()
   resetUsageEventLocks()
+  resetFeedbackSubmitLock()
 })
 
 if (typeof HTMLDialogElement !== 'undefined') {

@@ -10,6 +10,7 @@ import {
 } from 'react'
 import { createInitialState } from '../domain/initialState.ts'
 import { resetUsageEventLocks } from '../analytics/usage.ts'
+import { resetFeedbackSubmitLock } from '../analytics/submitFeedback.ts'
 import type { ProgramState, StepId } from '../domain/types.ts'
 import {
   clearProgramState,
@@ -88,6 +89,7 @@ export function ProgramProvider({ children, storage = localStorage }: ProviderPr
     stateRef.current = initial
     dispatch({ type: 'RESET' })
     resetUsageEventLocks()
+    resetFeedbackSubmitLock()
     clearProgramState(storage)
   }, [storage])
 

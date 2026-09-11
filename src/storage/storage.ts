@@ -111,6 +111,7 @@ export function parseProgramState(raw: unknown): ProgramState | null {
     usageStartedTracked: raw.usageStartedTracked === true,
     usageCompletedTracked: raw.usageCompletedTracked === true,
     usageSavedTracked: raw.usageSavedTracked === true,
+    feedbackSubmitted: raw.feedbackSubmitted === true,
     areaScores: parseAreaScores(raw.areaScores),
     priorityAreaId: isLifeAreaId(raw.priorityAreaId) ? raw.priorityAreaId : null,
     priorityReason: asString(raw.priorityReason),

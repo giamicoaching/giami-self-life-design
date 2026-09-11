@@ -40,8 +40,17 @@ describe('program storage', () => {
     expect(loaded?.gender).toBe('female')
     expect(loaded?.runId).toBe(state.runId)
     expect(loaded?.usageSavedTracked).toBe(false)
+    expect(loaded?.feedbackSubmitted).toBe(false)
     expect(loaded?.completedStepIds).toContain('step1-result')
     expect(loaded?.completedStepIds).toContain('step2')
+  })
+
+  it('restores that feedback was already submitted for the same run', () => {
+    const memory = createMemoryStorage()
+    const state = filledState()
+    state.feedbackSubmitted = true
+    saveProgramState(state, memory)
+    expect(loadProgramState(memory)?.feedbackSubmitted).toBe(true)
   })
 
   it('survives JSON snapshot round-trip used on browser reopen', () => {

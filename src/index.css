@@ -864,6 +864,67 @@ textarea.input {
   box-shadow: none;
 }
 
+.summary-feedback {
+  margin: 24px 0 8px;
+  padding: 16px 16px 18px;
+  background: #fff;
+  border: 1px solid var(--line);
+  border-radius: 14px;
+}
+
+.summary-feedback h2 {
+  font-size: 1.2rem;
+  margin-bottom: 8px;
+}
+
+.feedback-privacy {
+  color: var(--muted);
+  font-size: 0.98rem;
+  line-height: 1.6;
+  word-break: keep-all;
+}
+
+.feedback-scale,
+.feedback-stages {
+  border: 0;
+  padding: 0;
+  margin: 0 0 16px;
+}
+
+.feedback-scale-ends {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--muted);
+  font-size: 0.92rem;
+  margin-bottom: 6px;
+}
+
+.feedback-scale-options {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 4px;
+}
+
+.feedback-stages {
+  display: grid;
+  gap: 8px;
+}
+
+.feedback-count {
+  margin: 6px 0 0;
+  color: var(--muted);
+  font-size: 0.95rem;
+}
+
+.feedback-status {
+  margin: 0 0 12px;
+}
+
+.feedback-status-error {
+  color: var(--danger);
+}
+
 .coaching-invite h2 {
   font-size: 1.04rem;
   font-weight: 600;
@@ -1020,6 +1081,14 @@ textarea.input {
     width: 100%;
   }
 
+  .summary-feedback .btn {
+    width: 100%;
+  }
+
+  .feedback-scale-options {
+    gap: 2px;
+  }
+
   .copyright-dialog,
   .copyright-dialog-panel {
     max-height: min(90svh, 720px);
@@ -1052,7 +1121,8 @@ textarea.input {
   }
 
   .no-print,
-  .progress-header {
+  .progress-header,
+  .summary-feedback {
     display: none !important;
   }
 

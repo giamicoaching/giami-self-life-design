@@ -12,6 +12,27 @@ export const HOME_HERO_LABEL = '삶을 돌아보고 앞으로 나아가는 방�
 export const HOME_REQUIRED_NOTE =
   '별도 표시가 없는 항목은 필수이며, 선택항목은 ‘(선택)’으로 표시됩니다.'
 export const OPTIONAL_FIELD_MARK = '(선택)'
+export const FEEDBACK_TITLE = '프로그램 의견'
+export const FEEDBACK_PRIVACY =
+  '제출한 평가와 개선 의견은 프로그램 개선을 위해 익명으로 전송됩니다. 이름, 연락처 등 개인정보는 작성하지 말아 주세요.'
+export const FEEDBACK_HELPFULNESS_LABEL =
+  '이 프로그램이 앞으로의 삶을 설계하는 데 얼마나 도움이 되었나요?'
+export const FEEDBACK_STAGE_LABEL = '가장 도움이 된 과정은 무엇이었나요?'
+export const FEEDBACK_COMMENT_LABEL = '프로그램에서 보완되었으면 하는 점이 있다면 알려주세요.'
+export const FEEDBACK_SUBMIT_LABEL = '피드백 보내기'
+export const FEEDBACK_SUCCESS = '소중한 의견을 보내주셔서 감사합니다.'
+export const FEEDBACK_ERROR = '피드백을 전송하지 못했습니다. 잠시 후 다시 시도해 주세요.'
+export const FEEDBACK_HELPFULNESS_LOW = '전혀 도움 되지 않음'
+export const FEEDBACK_HELPFULNESS_MID = '보통'
+export const FEEDBACK_HELPFULNESS_HIGH = '매우 도움 됨'
+export const FEEDBACK_COMMENT_MAX = 300
+export const FEEDBACK_STAGES = [
+  '삶의 영역 돌아보기',
+  '우선적으로 다룰 영역 선택',
+  '핵심가치 탐색',
+  '목표 구체화',
+  '첫 행동 계획',
+] as const
 
 export const WHEEL_RESULT_NOTICE =
   '이 결과는 개인을 진단하거나 평가하기 위한 것이 아니라, 현재의 삶을 돌아보고 앞으로의 방향을 스스로 선택하도록 돕는 참고정보입니다.'

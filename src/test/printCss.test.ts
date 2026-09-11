@@ -34,6 +34,10 @@ describe('print layout rules', () => {
     expect(css).not.toMatch(/\.coaching-invite[^{]*\.no-print/)
   })
 
+  it('hides the summary feedback form when printing', () => {
+    expect(css).toMatch(/@media print[\s\S]*\.summary-feedback[\s\S]*display:\s*none/)
+  })
+
   it('prints the summary copyright credit and hides the on-screen footer', () => {
     expect(css).toContain('.print-credit')
     expect(css).toMatch(/@media print[\s\S]*\.print-credit/)

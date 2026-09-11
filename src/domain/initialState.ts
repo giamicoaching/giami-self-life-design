@@ -29,6 +29,7 @@ export function createInitialState(): ProgramState {
     usageStartedTracked: false,
     usageCompletedTracked: false,
     usageSavedTracked: false,
+    feedbackSubmitted: false,
     areaScores: emptyAreaScores(),
     priorityAreaId: null,
     priorityReason: '',
