@@ -1,16 +1,22 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { StepGuard } from '../components/StepGuard.tsx'
 import { StepHeading, StepNav } from '../components/layout/ProgramShell.tsx'
 import { Chip } from '../components/ui/Chip.tsx'
 import { TextArea, TextField } from '../components/ui/Field.tsx'
-import { Notice } from '../components/ui/Notice.tsx'
 import { Scale } from '../components/ui/Scale.tsx'
+import { MissingResponseAlert } from '../components/validation/MissingResponseAlert.tsx'
+import { QuestionBlock } from '../components/validation/QuestionBlock.tsx'
+import { useMissingResponses } from '../components/validation/useMissingResponses.ts'
 import { getLifeArea } from '../domain/lifeAreas.ts'
 import { SELF_CHECK_ITEMS } from '../domain/selfChecks.ts'
+import { STEP_PATHS } from '../domain/steps.ts'
 import { getCoreValue } from '../domain/values.ts'
 import { GOAL_CRITERIA_PLACEHOLDER, GOAL_PERIOD_PLACEHOLDER } from '../domain/examples.ts'
-import { canProceedFromStep, isInsufficientGoal, stepValidationMessage } from '../domain/validation.ts'
+import {
+  firstIncompleteStepBefore,
+  incompleteStepLocationState,
+  isInsufficientGoal,
+} from '../domain/validation.ts'
 import { useProgram } from '../state/ProgramProvider.tsx'
 
 export function Step4GoalPage() {
@@ -24,17 +30,22 @@ export function Step4GoalPage() {
 function Step4Body() {
   const { state, dispatch } = useProgram()
   const navigate = useNavigate()
-  const [error, setError] = useState<string | null>(null)
+  const { banner, errorFor, validate } = useMissingResponses('step4')
   const areaName = state.priorityAreaId ? getLifeArea(state.priorityAreaId).name : ''
-  const goalError = isInsufficientGoal(state.goal)
-    ? '빈칸이거나 ‘모르겠음·모름·잘 모르겠음’만 있으면 다음으로 갈 수 없습니다.'
-    : undefined
+  const valueError = errorFor('goal-values')
+  const liveGoalError =
+    state.goal.trim() && isInsufficientGoal(state.goal)
+      ? '빈칸이거나 ‘모르겠음·모름·잘 모르겠음’만 있으면 다음으로 갈 수 없습니다.'
+      : undefined
+  const goalError = liveGoalError ?? errorFor('goal')
 
   const goNext = () => {
-    if (!canProceedFromStep(state, 'step4')) {
-      setError(stepValidationMessage(state, 'step4'))
+    const previous = firstIncompleteStepBefore(state, 'step4')
+    if (previous) {
+      navigate(STEP_PATHS[previous], { state: incompleteStepLocationState() })
       return
     }
+    if (!validate()) return
     navigate('/step/5')
   }
 
@@ -57,8 +68,16 @@ function Step4Body() {
           {state.refinedChange}
         </p>
       </article>
-      {error ? <Notice tone="error">{error}</Notice> : null}
-      <fieldset className="chip-fieldset">
+      {banner ? (
+        <MissingResponseAlert redirected={banner.type === 'redirected'} count={banner.count} />
+      ) : null}
+      <QuestionBlock
+        id="question-goal-values"
+        error={valueError}
+        className="chip-fieldset"
+        as="fieldset"
+        tabIndex={-1}
+      >
         <legend className="count-line">목표에 반영할 가치 (1개 또는 2개)</legend>
         <div className="chip-grid" id="first-field" tabIndex={-1}>
           {state.coreValueIds.map((id) => {
@@ -78,12 +97,13 @@ function Step4Body() {
             )
           })}
         </div>
-      </fieldset>
+      </QuestionBlock>
       <TextArea
         id="goal"
+        questionId="question-goal"
         label="나의 목표"
         hint="5단계 행동계획의 출발점이므로 반드시 구체적으로 작성해 주세요."
-        error={state.goal.trim() && goalError ? goalError : undefined}
+        error={goalError}
         value={state.goal}
         onChange={(event) => dispatch({ type: 'SET_GOAL', text: event.target.value })}
         rows={5}
@@ -119,6 +139,7 @@ function Step4Body() {
         name="goal-feasibility"
         label="목표 실현 가능성"
         value={state.goalFeasibility}
+        error={errorFor('goal-feasibility')}
         onChange={(value) => dispatch({ type: 'SET_GOAL_FEASIBILITY', value })}
         lowLabel="낮음"
         highLabel="높음"

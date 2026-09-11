@@ -527,6 +527,61 @@ textarea.input {
   border-color: color-mix(in srgb, var(--danger) 30%, white);
 }
 
+.question-block {
+  scroll-margin-top: 8.5rem;
+}
+
+.question-block.is-error {
+  border: 2px solid var(--danger);
+  background: var(--danger-soft);
+  border-radius: 12px;
+  padding: 12px;
+}
+
+.area-choice.is-error,
+.chip-fieldset.is-error,
+.check-row.is-error {
+  margin-bottom: 16px;
+}
+
+.check-row.is-error .field-error,
+.area-choice.is-error .field-error,
+.chip-fieldset.is-error .field-error,
+.stack.is-error .field-error {
+  flex: 1 0 100%;
+  width: 100%;
+}
+
+.missing-response-alert {
+  display: flex;
+  gap: 10px;
+  align-items: flex-start;
+}
+
+.missing-response-icon {
+  flex: none;
+  color: var(--danger);
+  margin-top: 2px;
+}
+
+.missing-response-copy {
+  min-width: 0;
+}
+
+.missing-response-label,
+.missing-response-message {
+  margin: 0;
+}
+
+.missing-response-label {
+  font-weight: 700;
+  color: var(--danger);
+}
+
+.missing-response-message {
+  margin-top: 2px;
+}
+
 .step-nav {
   margin-top: 20px;
   padding-top: 12px;
@@ -882,6 +937,10 @@ textarea.input {
 @media (max-width: 420px) {
   :root {
     font-size: 17px;
+  }
+
+  .question-block {
+    scroll-margin-top: 9.5rem;
   }
 
   .sheet {

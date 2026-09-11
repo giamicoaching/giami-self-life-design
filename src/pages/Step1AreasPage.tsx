@@ -1,12 +1,17 @@
-import { useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { StepGuard } from '../components/StepGuard.tsx'
 import { StepHeading, StepNav } from '../components/layout/ProgramShell.tsx'
 import { Notice } from '../components/ui/Notice.tsx'
 import { Scale } from '../components/ui/Scale.tsx'
+import { MissingResponseAlert } from '../components/validation/MissingResponseAlert.tsx'
+import { useMissingResponses } from '../components/validation/useMissingResponses.ts'
 import { AREA_PAGES, getLifeArea } from '../domain/lifeAreas.ts'
+import { STEP_PATHS } from '../domain/steps.ts'
 import type { StepId } from '../domain/types.ts'
-import { canProceedFromStep, stepValidationMessage } from '../domain/validation.ts'
+import {
+  firstIncompleteStepBefore,
+  incompleteStepLocationState,
+} from '../domain/validation.ts'
 import { trackLifeDesignStarted } from '../analytics/usage.ts'
 import { useProgram } from '../state/ProgramProvider.tsx'
 
@@ -30,16 +35,17 @@ export function Step1AreasPage() {
 function Step1AreasBody({ page, stepId }: { page: 1 | 2 | 3; stepId: StepId }) {
   const { state, dispatch } = useProgram()
   const navigate = useNavigate()
-  const [error, setError] = useState<string | null>(null)
+  const { banner, errorFor, validate } = useMissingResponses(stepId)
   const areaIds = AREA_PAGES[page - 1] ?? []
   const areas = areaIds.map(getLifeArea)
 
   const goNext = () => {
-    if (!canProceedFromStep(state, stepId)) {
-      setError(stepValidationMessage(state, stepId))
+    const previous = firstIncompleteStepBefore(state, stepId)
+    if (previous) {
+      navigate(STEP_PATHS[previous], { state: incompleteStepLocationState() })
       return
     }
-    setError(null)
+    if (!validate()) return
     if (page < 3) navigate(`/step/1/${page + 1}`)
     else navigate('/step/1/result')
   }
@@ -52,7 +58,9 @@ function Step1AreasBody({ page, stepId }: { page: 1 | 2 | 3; stepId: StepId }) {
           1부터 7까지 표시해 주세요. 정답은 없으며, 숫자의 높고 낮음이 좋고 나쁨을 뜻하지 않습니다.
         </p>
       </StepHeading>
-      {error ? <Notice tone="error">{error}</Notice> : null}
+      {banner ? (
+        <MissingResponseAlert redirected={banner.type === 'redirected'} count={banner.count} />
+      ) : null}
       <div className="stack">
         {areas.map((area, index) => {
           const score = state.areaScores[area.id]
@@ -66,6 +74,7 @@ function Step1AreasBody({ page, stepId }: { page: 1 | 2 | 3; stepId: StepId }) {
                 name={`${area.id}-importance`}
                 label={`${area.name} 중요도`}
                 value={score.importance}
+                error={errorFor(`${area.id}-importance`)}
                 onChange={(value) => {
                   dispatch({
                     type: 'SET_AREA_SCORE',
@@ -83,6 +92,7 @@ function Step1AreasBody({ page, stepId }: { page: 1 | 2 | 3; stepId: StepId }) {
                 name={`${area.id}-satisfaction`}
                 label={`${area.name} 만족도`}
                 value={score.satisfaction}
+                error={errorFor(`${area.id}-satisfaction`)}
                 onChange={(value) => {
                   dispatch({
                     type: 'SET_AREA_SCORE',

@@ -1,12 +1,18 @@
-import { useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { StepGuard } from '../components/StepGuard.tsx'
 import { StepHeading, StepNav } from '../components/layout/ProgramShell.tsx'
 import { Notice } from '../components/ui/Notice.tsx'
 import { TextArea } from '../components/ui/Field.tsx'
+import { MissingResponseAlert } from '../components/validation/MissingResponseAlert.tsx'
+import { QuestionBlock } from '../components/validation/QuestionBlock.tsx'
+import { useMissingResponses } from '../components/validation/useMissingResponses.ts'
 import { changeReviewIndex } from '../domain/calculations.ts'
 import { LIFE_AREAS } from '../domain/lifeAreas.ts'
-import { canProceedFromStep, stepValidationMessage } from '../domain/validation.ts'
+import { STEP_PATHS } from '../domain/steps.ts'
+import {
+  firstIncompleteStepBefore,
+  incompleteStepLocationState,
+} from '../domain/validation.ts'
 import { useProgram } from '../state/ProgramProvider.tsx'
 
 export function Step2PriorityPage() {
@@ -20,13 +26,17 @@ export function Step2PriorityPage() {
 function Step2Body() {
   const { state, dispatch } = useProgram()
   const navigate = useNavigate()
-  const [error, setError] = useState<string | null>(null)
+  const { banner, errorFor, validate } = useMissingResponses('step2')
+  const areaError = errorFor('priority-area')
+  const reasonError = errorFor('priority-reason')
 
   const goNext = () => {
-    if (!canProceedFromStep(state, 'step2')) {
-      setError(stepValidationMessage(state, 'step2'))
+    const previous = firstIncompleteStepBefore(state, 'step2')
+    if (previous) {
+      navigate(STEP_PATHS[previous], { state: incompleteStepLocationState() })
       return
     }
+    if (!validate()) return
     navigate('/step/3/change')
   }
 
@@ -43,8 +53,10 @@ function Step2Body() {
         우선 삶의 영역을 자동으로 결정하지 않습니다. 현재 필요성·의미·변화 가능성을 고려하여 직접
         선택해 주세요.
       </Notice>
-      {error ? <Notice tone="error">{error}</Notice> : null}
-      <fieldset className="area-choice">
+      {banner ? (
+        <MissingResponseAlert redirected={banner.type === 'redirected'} count={banner.count} />
+      ) : null}
+      <QuestionBlock id="question-priority-area" error={areaError} className="area-choice" as="fieldset" tabIndex={-1}>
         <legend className="sr-only">우선 삶의 영역</legend>
         {LIFE_AREAS.map((area, index) => {
           const score = state.areaScores[area.id]
@@ -69,11 +81,13 @@ function Step2Body() {
             </label>
           )
         })}
-      </fieldset>
+      </QuestionBlock>
       <TextArea
         id="priority-reason"
+        questionId="question-priority-reason"
         label="이 영역을 선택한 이유"
         hint="왜 지금 이 영역을 우선하고 싶은지 자유롭게 적어 주세요."
+        error={reasonError}
         value={state.priorityReason}
         onChange={(event) => dispatch({ type: 'SET_PRIORITY_REASON', reason: event.target.value })}
         rows={5}

@@ -43,3 +43,20 @@ export function createReadySummaryState(): ProgramState {
   state.lastVisitedStep = 'summary'
   return state
 }
+
+export function createStateThroughGoal(): ProgramState {
+  const state = createReadySummaryState()
+  state.actions = ['', '', '']
+  state.primaryActionIndex = null
+  state.actionType = null
+  state.actionWhat = ''
+  state.actionWhen = ''
+  state.actionWhere = ''
+  state.actionFrequencyOrDuration = ''
+  state.obstacle = ''
+  state.alternativeAction = ''
+  state.firstActionFeasibility = null
+  state.lastVisitedStep = 'step5'
+  state.programCompleted = false
+  return state
+}

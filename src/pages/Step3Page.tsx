@@ -1,15 +1,20 @@
-import { useState } from 'react'
 import { Navigate, useNavigate, useParams } from 'react-router-dom'
 import { StepGuard } from '../components/StepGuard.tsx'
 import { StepHeading, StepNav } from '../components/layout/ProgramShell.tsx'
 import { Chip } from '../components/ui/Chip.tsx'
 import { TextArea } from '../components/ui/Field.tsx'
-import { Notice } from '../components/ui/Notice.tsx'
+import { MissingResponseAlert } from '../components/validation/MissingResponseAlert.tsx'
+import { QuestionBlock } from '../components/validation/QuestionBlock.tsx'
+import { useMissingResponses } from '../components/validation/useMissingResponses.ts'
 import { getLifeArea } from '../domain/lifeAreas.ts'
+import { STEP_PATHS } from '../domain/steps.ts'
 import type { StepId } from '../domain/types.ts'
 import { CORE_VALUES, getCoreValue } from '../domain/values.ts'
 import { changeIdeaPlaceholder, refineChangeExample } from '../domain/examples.ts'
-import { canProceedFromStep, stepValidationMessage } from '../domain/validation.ts'
+import {
+  firstIncompleteStepBefore,
+  incompleteStepLocationState,
+} from '../domain/validation.ts'
 import { useProgram } from '../state/ProgramProvider.tsx'
 
 const SUB_STEPS = {
@@ -37,15 +42,18 @@ export function Step3Page() {
 function Step3Body({ sub, stepId }: { sub: SubKey; stepId: StepId }) {
   const { state, dispatch } = useProgram()
   const navigate = useNavigate()
-  const [error, setError] = useState<string | null>(null)
+  const { banner, errorFor, validate } = useMissingResponses(stepId)
   const areaName = state.priorityAreaId ? getLifeArea(state.priorityAreaId).name : '선택 영역'
+  const candidateError = errorFor('candidate-values')
+  const coreError = errorFor('core-values')
 
   const goNext = () => {
-    if (!canProceedFromStep(state, stepId)) {
-      setError(stepValidationMessage(state, stepId))
+    const previous = firstIncompleteStepBefore(state, stepId)
+    if (previous) {
+      navigate(STEP_PATHS[previous], { state: incompleteStepLocationState() })
       return
     }
-    setError(null)
+    if (!validate()) return
     if (sub === 'change') navigate('/step/3/candidates')
     if (sub === 'candidates') navigate('/step/3/core')
     if (sub === 'core') navigate('/step/3/refine')
@@ -82,15 +90,19 @@ function Step3Body({ sub, stepId }: { sub: SubKey; stepId: StepId }) {
           </p>
         )}
       </StepHeading>
-      {error ? <Notice tone="error">{error}</Notice> : null}
+      {banner ? (
+        <MissingResponseAlert redirected={banner.type === 'redirected'} count={banner.count} />
+      ) : null}
 
       {sub === 'change' ? (
         <>
           <TextArea
             id="first-field"
+            questionId="question-change-ideas"
             label={`‘${areaName}’에서 지금보다 무엇이 달라지기를 바라나요?`}
             hint="더 늘리거나 발전시키고 싶은 것, 새롭게 시작하고 싶은 것, 줄이거나 그만두고 싶은 것, 잘하고 있어서 유지하고 싶은 것을 단서로 삼아 보세요."
             placeholder={changeIdeaPlaceholder(state.priorityAreaId)}
+            error={errorFor('change-ideas')}
             value={state.changeIdeas}
             onChange={(event) => dispatch({ type: 'SET_CHANGE_IDEAS', text: event.target.value })}
             rows={7}
@@ -101,7 +113,13 @@ function Step3Body({ sub, stepId }: { sub: SubKey; stepId: StepId }) {
 
       {sub === 'candidates' ? (
         <>
-          <fieldset className="chip-fieldset">
+          <QuestionBlock
+            id="question-candidate-values"
+            error={candidateError}
+            className="chip-fieldset"
+            as="fieldset"
+            tabIndex={-1}
+          >
             <legend className="count-line">
               가치 후보 <strong>{state.candidateValueIds.length}/5개 선택</strong>
             </legend>
@@ -122,7 +140,7 @@ function Step3Body({ sub, stepId }: { sub: SubKey; stepId: StepId }) {
                 )
               })}
             </div>
-          </fieldset>
+          </QuestionBlock>
           <ul className="value-defs">
             {CORE_VALUES.map((value) => (
               <li key={value.id}>
@@ -136,7 +154,13 @@ function Step3Body({ sub, stepId }: { sub: SubKey; stepId: StepId }) {
 
       {sub === 'core' ? (
         <>
-          <fieldset className="chip-fieldset">
+          <QuestionBlock
+            id="question-core-values"
+            error={coreError}
+            className="chip-fieldset"
+            as="fieldset"
+            tabIndex={-1}
+          >
             <legend className="count-line">
               핵심 가치 <strong>{state.coreValueIds.length} / 2</strong>
             </legend>
@@ -158,7 +182,7 @@ function Step3Body({ sub, stepId }: { sub: SubKey; stepId: StepId }) {
                 )
               })}
             </div>
-          </fieldset>
+          </QuestionBlock>
           <ul className="value-defs">
             {state.candidateValueIds.map((id) => {
               const value = getCoreValue(id)
@@ -192,9 +216,11 @@ function Step3Body({ sub, stepId }: { sub: SubKey; stepId: StepId }) {
           </article>
           <TextArea
             id="first-field"
+            questionId="question-refined-change"
             label="두 가치가 반영되도록 원하는 변화를 다시 구체화해 주세요"
             hint={refineChangeExample(state.coreValueIds.map((id) => getCoreValue(id).name))}
             placeholder={refineChangeExample(state.coreValueIds.map((id) => getCoreValue(id).name))}
+            error={errorFor('refined-change')}
             value={state.refinedChange}
             onChange={(event) => dispatch({ type: 'SET_REFINED_CHANGE', text: event.target.value })}
             rows={7}

@@ -1,6 +1,7 @@
 import { useEffect, type ReactNode } from 'react'
 import { Outlet, useLocation, useNavigate } from 'react-router-dom'
 import { getMainStageByStep, getStepProgress, pathToStepId } from '../../domain/steps.ts'
+import { isValidationLocationState } from '../../domain/validation.ts'
 import { useProgram } from '../../state/ProgramProvider.tsx'
 import { ProgressHeader } from './ProgressHeader.tsx'
 import { SiteFooter } from '../SiteFooter.tsx'
@@ -13,18 +14,23 @@ export function ProgramShell() {
   const progress = getStepProgress(stepId)
 
   useEffect(() => {
-    window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
-    const firstField = document.getElementById('first-field')
-    if (
-      firstField instanceof HTMLInputElement ||
-      firstField instanceof HTMLTextAreaElement ||
-      firstField instanceof HTMLSelectElement
-    ) {
-      firstField.focus()
-    } else {
-      document.getElementById('step-title')?.focus()
+    const skipInitialFocus = isValidationLocationState(location.state)
+    if (!skipInitialFocus) {
+      window.scrollTo({ top: 0, left: 0, behavior: 'auto' })
+      const firstField = document.getElementById('first-field')
+      if (
+        firstField instanceof HTMLInputElement ||
+        firstField instanceof HTMLTextAreaElement ||
+        firstField instanceof HTMLSelectElement
+      ) {
+        firstField.focus()
+      } else {
+        document.getElementById('step-title')?.focus()
+      }
     }
     markVisited(stepId)
+    // location.state is read only when the path changes so a later replace() does not steal focus.
+    // eslint-disable-next-line react-hooks/exhaustive-deps -- pathname-only focus
   }, [location.pathname, markVisited, stepId])
 
   return (

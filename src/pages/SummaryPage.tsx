@@ -18,7 +18,12 @@ import { composeActionSentence, composeCopingPlanNatural } from '../domain/actio
 import { getLifeArea } from '../domain/lifeAreas.ts'
 import { SELF_CHECK_ITEMS, selfCheckAnswerLabel } from '../domain/selfChecks.ts'
 import { getCoreValue, HELP_RESOURCES } from '../domain/values.ts'
-import { isNoOrUnknownObstacle } from '../domain/validation.ts'
+import { STEP_PATHS } from '../domain/steps.ts'
+import {
+  firstIncompleteStepBefore,
+  incompleteStepLocationState,
+  isNoOrUnknownObstacle,
+} from '../domain/validation.ts'
 import { ResetConfirmDialog } from '../components/ResetConfirmDialog.tsx'
 import { trackLifeDesignCompleted } from '../analytics/usage.ts'
 import { useProgram } from '../state/ProgramProvider.tsx'
@@ -73,6 +78,11 @@ function SummaryBody() {
   )
 
   const handleComplete = () => {
+    const previous = firstIncompleteStepBefore(state, 'summary')
+    if (previous) {
+      navigate(STEP_PATHS[previous], { state: incompleteStepLocationState() })
+      return
+    }
     trackLifeDesignCompleted(state, () => dispatch({ type: 'MARK_USAGE_COMPLETED' }))
     dispatch({ type: 'MARK_COMPLETED' })
     saveNow({ programCompleted: true, usageCompletedTracked: true })

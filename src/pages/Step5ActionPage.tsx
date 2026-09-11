@@ -1,18 +1,21 @@
-import { useMemo, useState } from 'react'
+import { useMemo } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { StepGuard } from '../components/StepGuard.tsx'
 import { StepHeading, StepNav } from '../components/layout/ProgramShell.tsx'
 import { TextArea, TextField } from '../components/ui/Field.tsx'
-import { Notice } from '../components/ui/Notice.tsx'
 import { Scale } from '../components/ui/Scale.tsx'
+import { MissingResponseAlert } from '../components/validation/MissingResponseAlert.tsx'
+import { QuestionBlock } from '../components/validation/QuestionBlock.tsx'
+import { useMissingResponses } from '../components/validation/useMissingResponses.ts'
 import { composeActionSentence, composeCopingPlanNatural } from '../domain/actionSentence.ts'
 import { ACTION_PLACEHOLDERS } from '../domain/examples.ts'
+import { STEP_PATHS } from '../domain/steps.ts'
 import { HELP_RESOURCES } from '../domain/values.ts'
 import {
-  canProceedFromStep,
   canSelectActionIndex,
+  firstIncompleteStepBefore,
+  incompleteStepLocationState,
   isNoOrUnknownObstacle,
-  stepValidationMessage,
 } from '../domain/validation.ts'
 import { useProgram } from '../state/ProgramProvider.tsx'
 
@@ -27,7 +30,10 @@ export function Step5ActionPage() {
 function Step5Body() {
   const { state, dispatch } = useProgram()
   const navigate = useNavigate()
-  const [error, setError] = useState<string | null>(null)
+  const { banner, errorFor, validate } = useMissingResponses('step5')
+  const actionsError = errorFor('actions')
+  const primaryError = errorFor('primary-action')
+  const typeError = errorFor('action-type')
 
   const plan = useMemo(
     () =>
@@ -56,10 +62,12 @@ function Step5Body() {
   }, [state.obstacle, state.alternativeAction])
 
   const goNext = () => {
-    if (!canProceedFromStep(state, 'step5')) {
-      setError(stepValidationMessage(state, 'step5'))
+    const previous = firstIncompleteStepBefore(state, 'step5')
+    if (previous) {
+      navigate(STEP_PATHS[previous], { state: incompleteStepLocationState() })
       return
     }
+    if (!validate()) return
     navigate('/summary')
   }
 
@@ -71,12 +79,14 @@ function Step5Body() {
           계획을 구체화합니다.
         </p>
       </StepHeading>
-      {error ? <Notice tone="error">{error}</Notice> : null}
+      {banner ? (
+        <MissingResponseAlert redirected={banner.type === 'redirected'} count={banner.count} />
+      ) : null}
       <article className="card summary-card">
         <h2>나의 목표</h2>
         <p className="preserve">{state.goal}</p>
       </article>
-      <div className="stack">
+      <QuestionBlock id="question-actions" error={actionsError} className="stack">
         {([0, 1, 2] as const).map((index) => (
           <TextArea
             key={index}
@@ -91,8 +101,14 @@ function Step5Body() {
             rows={3}
           />
         ))}
-      </div>
-      <fieldset className="area-choice">
+      </QuestionBlock>
+      <QuestionBlock
+        id="question-primary-action"
+        error={primaryError}
+        className="area-choice"
+        as="fieldset"
+        tabIndex={-1}
+      >
         <legend>우선 실행행동 1개</legend>
         {([0, 1, 2] as const).map((index) => {
           const text = state.actions[index]
@@ -118,11 +134,18 @@ function Step5Body() {
             </label>
           )
         })}
-      </fieldset>
-      <fieldset className="check-row">
+      </QuestionBlock>
+      <QuestionBlock
+        id="question-action-type"
+        error={typeError}
+        className="check-row"
+        as="fieldset"
+        tabIndex={-1}
+      >
         <legend>행동유형</legend>
         <label>
           <input
+            id="action-type-once"
             type="radio"
             name="action-type"
             checked={state.actionType === 'once'}
@@ -132,6 +155,7 @@ function Step5Body() {
         </label>
         <label>
           <input
+            id="action-type-repeat"
             type="radio"
             name="action-type"
             checked={state.actionType === 'repeat'}
@@ -139,10 +163,12 @@ function Step5Body() {
           />
           일정 기간 반복하는 행동
         </label>
-      </fieldset>
+      </QuestionBlock>
       <TextArea
         id="action-what"
+        questionId="question-action-what"
         label="무엇을"
+        error={errorFor('action-what')}
         value={state.actionWhat}
         onChange={(event) =>
           dispatch({ type: 'SET_ACTION_DETAIL', field: 'actionWhat', text: event.target.value })
@@ -151,7 +177,9 @@ function Step5Body() {
       />
       <TextField
         id="action-when"
+        questionId="question-action-when"
         label={state.actionType === 'repeat' ? '언제 (요일·시간대·상황)' : '언제 (날짜·시간·상황)'}
+        error={errorFor('action-when')}
         value={state.actionWhen}
         onChange={(event) =>
           dispatch({ type: 'SET_ACTION_DETAIL', field: 'actionWhen', text: event.target.value })
@@ -159,7 +187,9 @@ function Step5Body() {
       />
       <TextField
         id="action-where"
+        questionId="question-action-where"
         label="어디서"
+        error={errorFor('action-where')}
         value={state.actionWhere}
         onChange={(event) =>
           dispatch({ type: 'SET_ACTION_DETAIL', field: 'actionWhere', text: event.target.value })
@@ -168,7 +198,9 @@ function Step5Body() {
       {state.actionType === 'repeat' ? (
         <TextField
           id="action-freq"
+          questionId="question-action-frequency"
           label="얼마나 자주"
+          error={errorFor('action-frequency')}
           value={state.actionFrequencyOrDuration}
           onChange={(event) =>
             dispatch({
@@ -202,20 +234,24 @@ function Step5Body() {
       ) : null}
       <TextArea
         id="obstacle"
+        questionId="question-obstacle"
         label="가장 가능성 높은 장애물 1개"
         hint="장애물이 없으면 ‘없음’, 잘 모르겠으면 ‘모름’이라고 적어 주세요."
+        error={errorFor('obstacle')}
         value={state.obstacle}
         onChange={(event) => dispatch({ type: 'SET_OBSTACLE', text: event.target.value })}
         rows={3}
       />
       <TextArea
         id="alternative"
+        questionId="question-alternative"
         label="대안행동"
         hint={
           isNoOrUnknownObstacle(state.obstacle)
             ? '장애물이 없음 또는 모름이면 ‘해당 없음’으로 두어도 됩니다.'
             : '장애물이 생겼을 때 대신 할 행동을 적어 주세요.'
         }
+        error={errorFor('alternative')}
         value={state.alternativeAction}
         onChange={(event) => dispatch({ type: 'SET_ALTERNATIVE', text: event.target.value })}
         rows={3}
@@ -251,6 +287,7 @@ function Step5Body() {
         name="first-feasibility"
         label="첫 행동 실행 가능성"
         value={state.firstActionFeasibility}
+        error={errorFor('first-feasibility')}
         onChange={(value) => dispatch({ type: 'SET_FIRST_ACTION_FEASIBILITY', value })}
       />
       <TextArea

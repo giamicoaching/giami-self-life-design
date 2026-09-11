@@ -4,10 +4,12 @@ import { programReducer } from '../state/programReducer.ts'
 import {
   canSelectActionIndex,
   canVisitStep,
+  getMissingFields,
   isInsufficientGoal,
   isNoOrUnknownObstacle,
   isNotApplicableAlternative,
   isStep5Complete,
+  missingResponseBanner,
   stepValidationMessage,
 } from './validation.ts'
 
@@ -123,5 +125,67 @@ describe('navigation gating', () => {
     expect(canVisitStep(state, 'step1-1')).toBe(true)
     expect(canVisitStep(state, 'step2')).toBe(false)
     expect(canVisitStep(state, 'summary')).toBe(false)
+  })
+})
+
+describe('missing field messages', () => {
+  it('lists area scores in screen order and names the first gap', () => {
+    const state = createInitialState()
+    const missing = getMissingFields(state, 'step1-1')
+    expect(missing).toHaveLength(6)
+    expect(missing[0]).toMatchObject({
+      id: 'selfGrowth-importance',
+      message: '자아·성장의 중요도를 1점부터 7점 사이에서 선택해 주세요.',
+    })
+    expect(missingResponseBanner(missing.length)).toBe(
+      '아직 응답하지 않은 항목이 6개 있습니다. 첫 번째 항목으로 이동했습니다.',
+    )
+    expect(missingResponseBanner(1)).toBe(
+      '아직 응답하지 않은 항목이 있습니다. 표시된 질문을 확인해 주세요.',
+    )
+  })
+
+  it('does not require hidden frequency or duration for a one-time action', () => {
+    let state = createInitialState()
+    state = programReducer(state, { type: 'SET_ACTION_TEXT', index: 0, text: '글을 쓴다' })
+    state = programReducer(state, { type: 'SET_PRIMARY_ACTION', index: 0 })
+    state = programReducer(state, { type: 'SET_ACTION_TYPE', actionType: 'once' })
+    state = programReducer(state, { type: 'SET_ACTION_DETAIL', field: 'actionWhat', text: '글을 쓴다' })
+    state = programReducer(state, { type: 'SET_ACTION_DETAIL', field: 'actionWhen', text: '토요일' })
+    state = programReducer(state, { type: 'SET_ACTION_DETAIL', field: 'actionWhere', text: '집' })
+    state = programReducer(state, { type: 'SET_OBSTACLE', text: '없음' })
+    state = programReducer(state, { type: 'SET_FIRST_ACTION_FEASIBILITY', value: 5 })
+    expect(getMissingFields(state, 'step5').map((field) => field.id)).not.toContain('action-frequency')
+    expect(isStep5Complete(state)).toBe(true)
+  })
+
+  it('requires frequency only when the repeating action type is selected', () => {
+    let state = createInitialState()
+    state = programReducer(state, { type: 'SET_ACTION_TEXT', index: 0, text: '글을 쓴다' })
+    state = programReducer(state, { type: 'SET_PRIMARY_ACTION', index: 0 })
+    state = programReducer(state, { type: 'SET_ACTION_TYPE', actionType: 'repeat' })
+    state = programReducer(state, { type: 'SET_ACTION_DETAIL', field: 'actionWhat', text: '글을 쓴다' })
+    state = programReducer(state, { type: 'SET_ACTION_DETAIL', field: 'actionWhen', text: '토요일' })
+    state = programReducer(state, { type: 'SET_ACTION_DETAIL', field: 'actionWhere', text: '집' })
+    state = programReducer(state, { type: 'SET_OBSTACLE', text: '모름' })
+    state = programReducer(state, { type: 'SET_FIRST_ACTION_FEASIBILITY', value: 5 })
+    expect(getMissingFields(state, 'step5').map((field) => field.id)).toEqual(['action-frequency'])
+    expect(getMissingFields(state, 'step5')[0]?.message).toBe('실행 빈도를 입력해 주세요.')
+  })
+
+  it('accepts 없음 and 모름 as obstacle answers without an alternative', () => {
+    let state = createInitialState()
+    state = programReducer(state, { type: 'SET_ACTION_TEXT', index: 0, text: '글을 쓴다' })
+    state = programReducer(state, { type: 'SET_PRIMARY_ACTION', index: 0 })
+    state = programReducer(state, { type: 'SET_ACTION_TYPE', actionType: 'once' })
+    state = programReducer(state, { type: 'SET_ACTION_DETAIL', field: 'actionWhat', text: '글을 쓴다' })
+    state = programReducer(state, { type: 'SET_ACTION_DETAIL', field: 'actionWhen', text: '토요일' })
+    state = programReducer(state, { type: 'SET_ACTION_DETAIL', field: 'actionWhere', text: '집' })
+    state = programReducer(state, { type: 'SET_FIRST_ACTION_FEASIBILITY', value: 5 })
+
+    const noneState = programReducer(state, { type: 'SET_OBSTACLE', text: '없음' })
+    expect(getMissingFields(noneState, 'step5')).toEqual([])
+    const unknownState = programReducer(state, { type: 'SET_OBSTACLE', text: '모름' })
+    expect(getMissingFields(unknownState, 'step5')).toEqual([])
   })
 })

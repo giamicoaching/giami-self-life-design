@@ -6,12 +6,25 @@ interface FieldProps {
   hint?: string
   error?: string
   optional?: boolean
+  questionId?: string
   children: ReactNode
 }
 
-export function Field({ id, label, hint, error, optional, children }: FieldProps) {
+export function Field({
+  id,
+  label,
+  hint,
+  error,
+  optional,
+  questionId,
+  children,
+}: FieldProps) {
+  const wrapperId = questionId ?? `question-${id}`
   return (
-    <div className="field">
+    <div
+      id={wrapperId}
+      className={error ? 'field question-block is-error' : 'field question-block'}
+    >
       <label className="field-label" htmlFor={id}>
         {label}
         {optional ? <span className="field-optional">선택</span> : null}
@@ -37,14 +50,30 @@ type TextAreaProps = {
   hint?: string
   error?: string
   optional?: boolean
+  questionId?: string
 } & TextareaHTMLAttributes<HTMLTextAreaElement>
 
-export function TextArea({ id, label, hint, error, optional, ...props }: TextAreaProps) {
+export function TextArea({
+  id,
+  label,
+  hint,
+  error,
+  optional,
+  questionId,
+  ...props
+}: TextAreaProps) {
   const describedBy = [hint ? `${id}-hint` : null, error ? `${id}-error` : null]
     .filter(Boolean)
     .join(' ')
   return (
-    <Field id={id} label={label} hint={hint} error={error} optional={optional}>
+    <Field
+      id={id}
+      label={label}
+      hint={hint}
+      error={error}
+      optional={optional}
+      questionId={questionId}
+    >
       <textarea
         id={id}
         className="input"
@@ -62,14 +91,30 @@ type TextFieldProps = {
   hint?: string
   error?: string
   optional?: boolean
+  questionId?: string
 } & InputHTMLAttributes<HTMLInputElement>
 
-export function TextField({ id, label, hint, error, optional, ...props }: TextFieldProps) {
+export function TextField({
+  id,
+  label,
+  hint,
+  error,
+  optional,
+  questionId,
+  ...props
+}: TextFieldProps) {
   const describedBy = [hint ? `${id}-hint` : null, error ? `${id}-error` : null]
     .filter(Boolean)
     .join(' ')
   return (
-    <Field id={id} label={label} hint={hint} error={error} optional={optional}>
+    <Field
+      id={id}
+      label={label}
+      hint={hint}
+      error={error}
+      optional={optional}
+      questionId={questionId}
+    >
       <input
         id={id}
         className="input"

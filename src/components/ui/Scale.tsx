@@ -6,6 +6,7 @@ interface ScaleProps {
   onChange: (value: number) => void
   lowLabel?: string
   highLabel?: string
+  error?: string
 }
 
 export function Scale({
@@ -16,15 +17,26 @@ export function Scale({
   onChange,
   lowLabel = '낮음',
   highLabel = '높음',
+  error,
 }: ScaleProps) {
+  const describedBy = error ? `${id}-error` : undefined
   return (
-    <fieldset className="scale" id={id}>
+    <fieldset
+      className={error ? 'scale question-block is-error' : 'scale question-block'}
+      id={id}
+      aria-invalid={error ? true : undefined}
+    >
       <legend className="scale-legend">{label}</legend>
       <div className="scale-ends">
         <span>{lowLabel} 1</span>
         <span>{highLabel} 7</span>
       </div>
-      <div className="scale-options" role="radiogroup" aria-label={label}>
+      <div
+        className="scale-options"
+        role="radiogroup"
+        aria-label={label}
+        aria-describedby={describedBy}
+      >
         {[1, 2, 3, 4, 5, 6, 7].map((score) => {
           const optionId = `${name}-${score}`
           return (
@@ -42,6 +54,11 @@ export function Scale({
           )
         })}
       </div>
+      {error ? (
+        <p className="field-error" id={`${id}-error`} role="alert" aria-live="assertive">
+          {error}
+        </p>
+      ) : null}
     </fieldset>
   )
 }
