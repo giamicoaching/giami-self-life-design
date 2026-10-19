@@ -21,20 +21,29 @@ import { createMemoryStorage } from '../storage/memoryStorage.ts'
 import { createReadySummaryState } from './fixtures.ts'
 
 const insertMock = vi.fn()
+const rpcMock = vi.fn()
 const fromMock = vi.fn(() => ({ insert: insertMock }))
 const getSupabaseClientMock = vi.mocked(getSupabaseClient)
 
 function mockInsert(result: unknown = { error: null }) {
   insertMock.mockReset()
+  rpcMock.mockReset()
   fromMock.mockClear()
   if (result instanceof Error) {
     insertMock.mockRejectedValue(result)
+    rpcMock.mockRejectedValue(result)
   } else {
     insertMock.mockResolvedValue(result)
+    const error =
+      result && typeof result === 'object' && 'error' in result
+        ? (result as { error: unknown }).error
+        : null
+    rpcMock.mockResolvedValue(error ? { data: null, error } : { data: 'updated', error: null })
   }
   fromMock.mockImplementation(() => ({ insert: insertMock }))
   getSupabaseClientMock.mockReturnValue({
     from: fromMock,
+    rpc: rpcMock,
   } as never)
 }
 
@@ -127,32 +136,43 @@ describe('home demographics and usage events', () => {
     expect(insertMock).not.toHaveBeenCalled()
   })
 
-  it('sends started with only run_id, event_name, age_group, and gender', async () => {
+  it('sends started with only run_id, age_group, and gender', async () => {
     const storage = renderHome()
     startProgram()
     await waitFor(() => expect(insertMock).toHaveBeenCalledTimes(1))
-    expect(fromMock).toHaveBeenCalledWith('life_design_events')
+    expect(fromMock).toHaveBeenCalledWith('self_life_design_usage')
     const payload = insertedRows()[0]
-    expect(payload).toMatchObject({
-      event_name: 'life_design_started',
+    expect(payload).toEqual({
+      run_id: payload?.run_id,
       age_group: '65-69',
       gender: 'female',
     })
-    expect(Object.keys(payload).sort()).toEqual(['age_group', 'event_name', 'gender', 'run_id'])
+    expect(Object.keys(payload ?? {}).sort()).toEqual(['age_group', 'gender', 'run_id'])
+    expect(payload).not.toHaveProperty('comment')
     expect(JSON.stringify({ ...payload, run_id: undefined })).not.toContain('67')
     expect(JSON.stringify(payload)).not.toContain('건강')
     expect(JSON.stringify(payload)).not.toContain('ageYears')
     expect(loadProgramState(storage)?.ageYears).toBe(67)
-    expect(loadProgramState(storage)?.runId).toBe(payload.run_id)
+    expect(loadProgramState(storage)?.runId).toBe(payload?.run_id)
   })
 
-  it('does not send started twice in the same run', async () => {
+  it('does not send started twice for the same run_id', async () => {
     renderHome()
     startProgram()
     await waitFor(() => expect(insertMock).toHaveBeenCalledTimes(1))
     const importance = screen.getByRole('radiogroup', { name: '자아·성장 중요도' })
     fireEvent.click(within(importance).getByRole('radio', { name: '5' }))
-    expect(insertedRows().filter((row) => row.event_name === 'life_design_started')).toHaveLength(1)
+    expect(insertMock).toHaveBeenCalledTimes(1)
+    expect(new Set(insertedRows().map((row) => row.run_id)).size).toBe(1)
+  })
+
+  it('continues when supabase is not configured', () => {
+    getSupabaseClientMock.mockReturnValue(null)
+    renderHome()
+    startProgram()
+    expect(screen.getByRole('heading', { name: '삶의 영역 평가' })).toBeInTheDocument()
+    expect(insertMock).not.toHaveBeenCalled()
+    expect(rpcMock).not.toHaveBeenCalled()
   })
 
   it('keeps going when the stats insert fails', async () => {
@@ -189,43 +209,40 @@ describe('completed and saved usage events', () => {
     return storage
   }
 
-  it('sends completed once with only anonymous fields', async () => {
+  it('calls the completed_at function once for the same run', async () => {
     const storage = renderSummary()
     fireEvent.click(screen.getByRole('button', { name: '생애설계 완료' }))
     fireEvent.click(screen.getByRole('button', { name: '생애설계 완료' }))
-    await waitFor(() => expect(insertMock).toHaveBeenCalled())
-    const completed = insertedRows().filter((row) => row.event_name === 'life_design_completed')
-    expect(completed).toHaveLength(1)
-    expect(completed[0]).toMatchObject({
-      event_name: 'life_design_completed',
-      age_group: '65-69',
-      gender: 'female',
+    await waitFor(() => expect(rpcMock).toHaveBeenCalledTimes(1))
+    expect(rpcMock).toHaveBeenCalledWith('complete_self_life_design_usage', {
+      p_run_id: loadProgramState(storage)?.runId,
     })
-    expect(Object.keys(completed[0] ?? {}).sort()).toEqual(['age_group', 'event_name', 'gender', 'run_id'])
-    expect(JSON.stringify(completed[0])).not.toContain('주 3회')
-    expect(JSON.stringify({ ...completed[0], run_id: undefined })).not.toContain('67')
+    expect(insertMock).not.toHaveBeenCalled()
+    expect(JSON.stringify(rpcMock.mock.calls)).not.toContain('주 3회')
+    expect(JSON.stringify(rpcMock.mock.calls)).not.toContain('67')
+    expect(JSON.stringify(rpcMock.mock.calls)).not.toContain('comment')
     expect(loadProgramState(storage)?.programCompleted).toBe(true)
   })
 
-  it('sends result_saved once on the first save click', async () => {
-    renderSummary()
+  it('calls the saved_at function once on the first save click', async () => {
+    const storage = renderSummary()
     fireEvent.click(screen.getByRole('button', { name: '결과 저장' }))
     fireEvent.click(screen.getByRole('button', { name: '결과 저장' }))
-    await waitFor(() => expect(insertMock).toHaveBeenCalled())
-    const saved = insertedRows().filter((row) => row.event_name === 'result_saved')
-    expect(saved).toHaveLength(1)
-    expect(Object.keys(saved[0] ?? {}).sort()).toEqual(['age_group', 'event_name', 'gender', 'run_id'])
-    expect(saved[0]).not.toHaveProperty('screen')
+    await waitFor(() => expect(rpcMock).toHaveBeenCalledTimes(1))
+    expect(rpcMock).toHaveBeenCalledWith('save_self_life_design_usage', {
+      p_run_id: loadProgramState(storage)?.runId,
+    })
+    expect(insertMock).not.toHaveBeenCalled()
   })
 
-  it('treats a unique constraint error as already saved and still completes', async () => {
+  it('still completes when the completed_at update reports a duplicate', async () => {
     mockInsert({ error: { code: '23505', message: 'duplicate key' } })
     const storage = renderSummary()
     fireEvent.click(screen.getByRole('button', { name: '생애설계 완료' }))
     expect(screen.getByText('자기주도 생애설계를 완료했습니다.')).toBeInTheDocument()
     expect(screen.queryByText(/duplicate|23505/i)).not.toBeInTheDocument()
     expect(loadProgramState(storage)?.programCompleted).toBe(true)
-    await waitFor(() => expect(insertMock).toHaveBeenCalled())
+    await waitFor(() => expect(rpcMock).toHaveBeenCalled())
   })
 })
 
@@ -250,7 +267,7 @@ describe('run_id across a new start', () => {
     fireEvent.click(screen.getByRole('button', { name: DEMOGRAPHICS_NEXT_LABEL }))
     await waitFor(() => expect(insertMock).toHaveBeenCalled())
     const payload = insertedRows()[0]
-    expect(payload.event_name).toBe('life_design_started')
+    expect(Object.keys(payload).sort()).toEqual(['age_group', 'gender', 'run_id'])
     expect(payload.run_id).not.toBe(previous.runId)
     expect(loadProgramState(storage)?.runId).toBe(payload.run_id)
   })

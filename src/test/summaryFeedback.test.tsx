@@ -20,22 +20,19 @@ import { loadProgramState, saveProgramState } from '../storage/storage.ts'
 import { createMemoryStorage } from '../storage/memoryStorage.ts'
 import { createReadySummaryState } from './fixtures.ts'
 
-const insertMock = vi.fn()
-const fromMock = vi.fn()
+const rpcMock = vi.fn()
 const getSupabaseClientMock = vi.mocked(getSupabaseClient)
 
-function mockInsert(result: unknown = { error: null }) {
-  insertMock.mockReset()
-  fromMock.mockReset()
+function mockRpc(result: unknown = { data: 'updated', error: null }) {
+  rpcMock.mockReset()
   if (result instanceof Error) {
-    insertMock.mockRejectedValue(result)
+    rpcMock.mockRejectedValue(result)
   } else if (typeof result === 'function') {
-    insertMock.mockImplementation(result as never)
+    rpcMock.mockImplementation(result as never)
   } else {
-    insertMock.mockResolvedValue(result)
+    rpcMock.mockResolvedValue(result)
   }
-  fromMock.mockImplementation((table: string) => ({ table, insert: insertMock }))
-  getSupabaseClientMock.mockReturnValue({ from: fromMock } as never)
+  getSupabaseClientMock.mockReturnValue({ rpc: rpcMock } as never)
 }
 
 function renderSummary(storage = createMemoryStorage()) {
@@ -54,7 +51,7 @@ function renderSummary(storage = createMemoryStorage()) {
 
 describe('summary anonymous feedback', () => {
   beforeEach(() => {
-    mockInsert()
+    mockRpc()
   })
 
   afterEach(() => {
@@ -69,17 +66,23 @@ describe('summary anonymous feedback', () => {
     expect(submit).toBeEnabled()
   })
 
-  it('submits with a score even when stage and comment are empty', async () => {
+  it('submits a score and stage without the written comment', async () => {
     renderSummary()
     fireEvent.click(screen.getByRole('radio', { name: /5점/ }))
-    fireEvent.click(screen.getByRole('button', { name: FEEDBACK_SUBMIT_LABEL }))
-    await waitFor(() => expect(insertMock).toHaveBeenCalledTimes(1))
-    expect(fromMock).toHaveBeenCalledWith('life_design_feedback')
-    expect(insertMock.mock.calls[0]?.[0]).toMatchObject({
-      helpfulness: 5,
-      helpful_stage: null,
-      comment: null,
+    fireEvent.change(screen.getByLabelText(new RegExp(FEEDBACK_COMMENT_LABEL)), {
+      target: { value: '이름은 홍길동입니다.' },
     })
+    fireEvent.click(screen.getByRole('button', { name: FEEDBACK_SUBMIT_LABEL }))
+    await waitFor(() => expect(rpcMock).toHaveBeenCalledTimes(1))
+    expect(rpcMock.mock.calls[0]?.[0]).toBe('submit_self_life_design_feedback')
+    expect(rpcMock.mock.calls[0]?.[1]).toEqual({
+      p_run_id: expect.any(String),
+      p_helpfulness: 5,
+      p_helpful_stage: null,
+    })
+    expect(JSON.stringify(rpcMock.mock.calls[0]?.[1])).not.toContain('홍길동')
+    expect(rpcMock.mock.calls[0]?.[1]).not.toHaveProperty('comment')
+    expect(rpcMock.mock.calls[0]?.[1]).not.toHaveProperty('p_comment')
     expect(screen.getByText(FEEDBACK_SUCCESS)).toBeInTheDocument()
     expect(screen.getByText(FEEDBACK_SUCCESS).closest('[aria-live="polite"]')).toBeTruthy()
   })
@@ -88,11 +91,13 @@ describe('summary anonymous feedback', () => {
     renderSummary()
     fireEvent.click(screen.getByRole('radio', { name: FEEDBACK_STAGES[0] }))
     fireEvent.click(screen.getByRole('button', { name: FEEDBACK_SUBMIT_LABEL }))
-    await waitFor(() => expect(insertMock).toHaveBeenCalledTimes(1))
-    expect(insertMock.mock.calls[0]?.[0]).toMatchObject({
-      helpfulness: null,
-      helpful_stage: FEEDBACK_STAGES[0],
+    await waitFor(() => expect(rpcMock).toHaveBeenCalledTimes(1))
+    expect(rpcMock.mock.calls[0]?.[1]).toEqual({
+      p_run_id: expect.any(String),
+      p_helpfulness: null,
+      p_helpful_stage: FEEDBACK_STAGES[0],
     })
+    expect(rpcMock.mock.calls[0]?.[1]).not.toHaveProperty('p_comment')
   })
 
   it('does not enable submit for a blank or whitespace-only form', () => {
@@ -113,8 +118,8 @@ describe('summary anonymous feedback', () => {
   })
 
   it('prevents a second click while the first request is in flight', async () => {
-    let finish: ((value: { error: null }) => void) | undefined
-    mockInsert(() => new Promise((resolve) => {
+    let finish: ((value: { data: string; error: null }) => void) | undefined
+    mockRpc(() => new Promise((resolve) => {
       finish = resolve
     }))
     renderSummary()
@@ -123,8 +128,8 @@ describe('summary anonymous feedback', () => {
     fireEvent.click(submit)
     await waitFor(() => expect(submit).toBeDisabled())
     fireEvent.click(submit)
-    expect(insertMock).toHaveBeenCalledTimes(1)
-    finish?.({ error: null })
+    expect(rpcMock).toHaveBeenCalledTimes(1)
+    finish?.({ data: 'updated', error: null })
     await waitFor(() => expect(screen.getByText(FEEDBACK_SUCCESS)).toBeInTheDocument())
   })
 
@@ -150,7 +155,7 @@ describe('summary anonymous feedback', () => {
   })
 
   it('treats a unique constraint as already submitted', async () => {
-    mockInsert({ error: { code: '23505', message: 'duplicate key' } })
+    mockRpc({ data: null, error: { code: '23505', message: 'duplicate key' } })
     const storage = renderSummary()
     fireEvent.click(screen.getByRole('radio', { name: /1점/ }))
     fireEvent.click(screen.getByRole('button', { name: FEEDBACK_SUBMIT_LABEL }))
@@ -159,7 +164,7 @@ describe('summary anonymous feedback', () => {
   })
 
   it('does not change save or complete when feedback insert fails', async () => {
-    mockInsert({ error: { message: 'network' } })
+    mockRpc({ data: null, error: { message: 'network' } })
     const storage = renderSummary()
     fireEvent.click(screen.getByRole('radio', { name: /4점/ }))
     fireEvent.click(screen.getByRole('button', { name: FEEDBACK_SUBMIT_LABEL }))

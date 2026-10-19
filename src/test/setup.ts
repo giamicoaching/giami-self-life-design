@@ -9,8 +9,10 @@ vi.mock('@vercel/analytics/react', () => ({
 }))
 
 vi.mock('../supabase/client.ts', () => ({
-  LIFE_DESIGN_EVENTS_TABLE: 'life_design_events',
-  LIFE_DESIGN_FEEDBACK_TABLE: 'life_design_feedback',
+  SELF_LIFE_DESIGN_USAGE_TABLE: 'self_life_design_usage',
+  COMPLETE_SELF_LIFE_DESIGN_USAGE: 'complete_self_life_design_usage',
+  SAVE_SELF_LIFE_DESIGN_USAGE: 'save_self_life_design_usage',
+  SUBMIT_SELF_LIFE_DESIGN_FEEDBACK: 'submit_self_life_design_feedback',
   getSupabaseClient: vi.fn(() => null),
   resetSupabaseClientCache: vi.fn(),
 }))

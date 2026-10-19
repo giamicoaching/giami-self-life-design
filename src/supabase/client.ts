@@ -1,7 +1,9 @@
 import { createClient, type SupabaseClient } from '@supabase/supabase-js'
 
-export const LIFE_DESIGN_EVENTS_TABLE = 'life_design_events'
-export const LIFE_DESIGN_FEEDBACK_TABLE = 'life_design_feedback'
+export const SELF_LIFE_DESIGN_USAGE_TABLE = 'self_life_design_usage'
+export const COMPLETE_SELF_LIFE_DESIGN_USAGE = 'complete_self_life_design_usage'
+export const SAVE_SELF_LIFE_DESIGN_USAGE = 'save_self_life_design_usage'
+export const SUBMIT_SELF_LIFE_DESIGN_FEEDBACK = 'submit_self_life_design_feedback'
 
 function readConfig(): { url: string; key: string } | null {
   const url = import.meta.env.VITE_SUPABASE_URL

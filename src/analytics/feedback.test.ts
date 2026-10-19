@@ -19,24 +19,34 @@ describe('feedback payload', () => {
       run_id: state.runId,
       helpfulness: 4,
       helpful_stage: '첫 행동 계획',
-      comment: '설명이 더 구체적이면 좋겠습니다.',
-      age_group: '65-69',
-      gender: 'female',
     })
+    expect(Object.keys(row ?? {}).sort()).toEqual(['helpful_stage', 'helpfulness', 'run_id'])
+    expect(row).not.toHaveProperty('comment')
+    expect(JSON.stringify(row)).not.toContain('설명이 더 구체적이면')
     expect(JSON.stringify(row)).not.toContain('주 3회')
     expect(JSON.stringify(row)).not.toContain('67')
   })
 
-  it('allows a comment or stage without a score, and rejects a completely empty form', () => {
+  it('stores a stage without a score and does not store a comment-only answer', () => {
     const state = createInitialState()
     state.ageDeclined = true
     state.gender = 'declined'
     expect(hasFeedbackAnswer(null, null, '')).toBe(false)
     expect(buildFeedbackRow(state, { helpfulness: null, helpfulStage: null, comment: '' })).toBeNull()
     expect(
-      buildFeedbackRow(state, { helpfulness: null, helpfulStage: null, comment: '조금 길어요' })
-        ?.helpfulness,
+      buildFeedbackRow(state, { helpfulness: null, helpfulStage: null, comment: '조금 길어요' }),
     ).toBeNull()
+    expect(
+      buildFeedbackRow(state, {
+        helpfulness: null,
+        helpfulStage: FEEDBACK_STAGES[0],
+        comment: '조금 길어요',
+      }),
+    ).toEqual({
+      run_id: state.runId,
+      helpfulness: null,
+      helpful_stage: FEEDBACK_STAGES[0],
+    })
     expect(clampFeedbackComment('가'.repeat(FEEDBACK_COMMENT_MAX + 8))).toHaveLength(
       FEEDBACK_COMMENT_MAX,
     )

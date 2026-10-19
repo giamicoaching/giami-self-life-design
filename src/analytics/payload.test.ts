@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest'
 import { createInitialState } from '../domain/initialState.ts'
-import { buildUsageEvent, toUsageGender } from './payload.ts'
+import { buildUsageStartRow, toUsageGender } from './payload.ts'
 
 describe('toUsageGender', () => {
   it('maps form gender values for anonymous stats', () => {
@@ -10,20 +10,21 @@ describe('toUsageGender', () => {
   })
 })
 
-describe('buildUsageEvent', () => {
-  it('sends only run_id, event_name, age_group, and gender', () => {
+describe('buildUsageStartRow', () => {
+  it('sends only run_id, age_group, and gender', () => {
     const state = createInitialState()
     state.ageInput = '67'
     state.ageYears = 67
     state.gender = 'female'
-    const row = buildUsageEvent(state, 'life_design_started')
+    const row = buildUsageStartRow(state)
     expect(row).toEqual({
       run_id: state.runId,
-      event_name: 'life_design_started',
       age_group: '65-69',
       gender: 'female',
     })
-    expect(Object.keys(row ?? {}).sort()).toEqual(['age_group', 'event_name', 'gender', 'run_id'])
+    expect(Object.keys(row ?? {}).sort()).toEqual(['age_group', 'gender', 'run_id'])
+    expect(row).not.toHaveProperty('comment')
+    expect(row).not.toHaveProperty('event_name')
     expect(JSON.stringify(row)).not.toContain('67')
     expect(JSON.stringify(row)).not.toContain('ageYears')
     expect(JSON.stringify(row)).not.toContain('ageInput')
@@ -33,7 +34,7 @@ describe('buildUsageEvent', () => {
     const state = createInitialState()
     state.ageDeclined = true
     state.gender = 'declined'
-    const row = buildUsageEvent(state, 'life_design_completed')
+    const row = buildUsageStartRow(state)
     expect(row?.age_group).toBe('not_provided')
     expect(row?.gender).toBe('not_provided')
     expect(JSON.stringify(row)).not.toContain('declined')
