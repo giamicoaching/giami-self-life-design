@@ -11,6 +11,7 @@ import { HOME_START_LABEL } from '../copy/programCopy.ts'
 import { HomePage } from '../pages/HomePage.tsx'
 import { DemographicsPage } from '../pages/DemographicsPage.tsx'
 import { Step1AreasPage } from '../pages/Step1AreasPage.tsx'
+import { Step1ResultPage } from '../pages/Step1ResultPage.tsx'
 import { SummaryPage } from '../pages/SummaryPage.tsx'
 import { ProgramProvider } from '../state/ProgramProvider.tsx'
 import { SaveToastProvider } from '../state/SaveToast.tsx'
@@ -224,8 +225,18 @@ describe('completed and saved usage events', () => {
     expect(loadProgramState(storage)?.programCompleted).toBe(true)
   })
 
-  it('calls the saved_at function once on the first save click', async () => {
-    const storage = renderSummary()
+  it('calls the saved_at function once on the first step 1 save click', async () => {
+    const storage = createMemoryStorage()
+    saveProgramState(createReadySummaryState(), storage)
+    render(
+      <MemoryRouter initialEntries={['/step/1/result']}>
+        <ProgramProvider storage={storage}>
+          <SaveToastProvider>
+            <Step1ResultPage />
+          </SaveToastProvider>
+        </ProgramProvider>
+      </MemoryRouter>,
+    )
     fireEvent.click(screen.getByRole('button', { name: '결과 저장' }))
     fireEvent.click(screen.getByRole('button', { name: '결과 저장' }))
     await waitFor(() => expect(rpcMock).toHaveBeenCalledTimes(1))

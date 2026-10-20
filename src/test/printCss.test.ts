@@ -38,6 +38,13 @@ describe('print layout rules', () => {
     expect(css).toMatch(/@media print[\s\S]*\.summary-feedback[\s\S]*display:\s*none/)
   })
 
+  it('keeps result guidance in normal flow and wraps on word boundaries', () => {
+    const guidance = css.match(/\.result-save-note\s*\{[^}]*\}/)?.[0] ?? ''
+    expect(guidance).toMatch(/word-break:\s*keep-all/)
+    expect(guidance).toMatch(/overflow-wrap:\s*break-word/)
+    expect(guidance).not.toContain('position:')
+  })
+
   it('prints the summary copyright credit and hides the on-screen footer', () => {
     expect(css).toContain('.print-credit')
     expect(css).toMatch(/@media print[\s\S]*\.print-credit/)

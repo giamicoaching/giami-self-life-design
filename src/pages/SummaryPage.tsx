@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react'
+import { useEffect, useMemo, useRef, useState } from 'react'
 import { useNavigate } from 'react-router-dom'
 import { ChangeIndexList, LifeWheel, WheelPrintBlock } from '../components/LifeWheel.tsx'
 import { StepGuard } from '../components/StepGuard.tsx'
@@ -27,8 +27,13 @@ import {
 import { ResetConfirmDialog } from '../components/ResetConfirmDialog.tsx'
 import { SummaryFeedback } from '../components/SummaryFeedback.tsx'
 import { trackLifeDesignCompleted } from '../analytics/usage.ts'
+import {
+  ANDROID_PDF_TOAST_MS,
+  PDF_ERROR_MESSAGE,
+  saveSummaryPdf,
+  shouldShowAndroidPdfToast,
+} from '../pdf/renderSummaryPdf.ts'
 import { useProgram } from '../state/ProgramProvider.tsx'
-import { useSaveResult } from '../state/SaveToast.tsx'
 import { useStartOver } from '../state/useStartOver.ts'
 
 export function SummaryPage() {
@@ -41,12 +46,16 @@ export function SummaryPage() {
 
 function SummaryBody() {
   const { state, saveNow, dispatch } = useProgram()
-  const saveResult = useSaveResult()
   const startOver = useStartOver()
   const navigate = useNavigate()
   const [completed, setCompleted] = useState(state.programCompleted)
   const [confirmReset, setConfirmReset] = useState(false)
+  const [isGeneratingPdf, setIsGeneratingPdf] = useState(false)
+  const [pdfError, setPdfError] = useState<string | null>(null)
+  const [androidPdfToast, setAndroidPdfToast] = useState(false)
   const completeRef = useRef<HTMLElement>(null)
+  const reportRef = useRef<HTMLDivElement>(null)
+  const androidToastTimer = useRef<number | null>(null)
 
   const areaName = state.priorityAreaId ? getLifeArea(state.priorityAreaId).name : ''
   const plan = useMemo(
@@ -78,6 +87,43 @@ function SummaryBody() {
     (item) => item.label,
   )
 
+  useEffect(() => {
+    return () => {
+      if (androidToastTimer.current !== null) window.clearTimeout(androidToastTimer.current)
+    }
+  }, [])
+
+  const handleDownloadPdf = async () => {
+    if (isGeneratingPdf) return
+    const report = reportRef.current
+    if (!report) {
+      setPdfError(PDF_ERROR_MESSAGE)
+      return
+    }
+    setIsGeneratingPdf(true)
+    setPdfError(null)
+    setAndroidPdfToast(false)
+    if (androidToastTimer.current !== null) {
+      window.clearTimeout(androidToastTimer.current)
+      androidToastTimer.current = null
+    }
+    try {
+      const result = await saveSummaryPdf(report)
+      if (shouldShowAndroidPdfToast(result, navigator.userAgent)) {
+        setAndroidPdfToast(true)
+        androidToastTimer.current = window.setTimeout(() => {
+          setAndroidPdfToast(false)
+          androidToastTimer.current = null
+        }, ANDROID_PDF_TOAST_MS)
+      }
+    } catch (error) {
+      console.error('PDF 생성 실패', error)
+      setPdfError(PDF_ERROR_MESSAGE)
+    } finally {
+      setIsGeneratingPdf(false)
+    }
+  }
+
   const handleComplete = () => {
     const previous = firstIncompleteStepBefore(state, 'summary')
     if (previous) {
@@ -94,7 +140,7 @@ function SummaryBody() {
   }
 
   return (
-    <>
+    <div className="summary-report" ref={reportRef}>
       <div className="print-only print-banner">
         <h1>지아미 자기주도 생애설계 종합 결과</h1>
         <p>{new Date(state.updatedAt).toLocaleString('ko-KR')}</p>
@@ -226,12 +272,20 @@ function SummaryBody() {
         <Button variant="secondary" onClick={() => navigate('/step/5')}>
           내용 수정하기
         </Button>
-        <Button variant="secondary" onClick={() => saveResult()}>
-          결과 저장
-        </Button>
-        <Button variant="secondary" onClick={() => window.print()}>
-          PDF 저장 또는 인쇄
-        </Button>
+        <p className="result-save-note">작성 내용은 현재 브라우저에 자동으로 저장됩니다.</p>
+        <div className="print-action">
+          <Button variant="secondary" onClick={() => void handleDownloadPdf()} disabled={isGeneratingPdf}>
+            {isGeneratingPdf ? 'PDF 만드는 중…' : 'PDF 저장·공유'}
+          </Button>
+          {pdfError ? (
+            <p className="pdf-error" role="alert">
+              {pdfError}
+            </p>
+          ) : null}
+          <button type="button" className="print-fallback" onClick={() => window.print()}>
+            인쇄하기
+          </button>
+        </div>
         <Button variant="danger" onClick={() => setConfirmReset(true)}>
           처음부터 다시 하기
         </Button>
@@ -260,6 +314,12 @@ function SummaryBody() {
         onCancel={() => setConfirmReset(false)}
         onConfirm={startOver}
       />
-    </>
+      {androidPdfToast ? (
+        <div className="android-pdf-toast no-print" role="status" aria-live="polite">
+          <strong>PDF가 저장되었습니다.</strong>
+          <span>휴대폰의 ‘내 파일 → 다운로드’에서 확인해 주세요.</span>
+        </div>
+      ) : null}
+    </div>
   )
 }

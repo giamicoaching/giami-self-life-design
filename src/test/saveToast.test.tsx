@@ -38,15 +38,16 @@ describe('result save toast', () => {
     expect(loadProgramState(storage)?.priorityAreaId).toBe('health')
   })
 
-  it('shows the toast from the summary save button', () => {
+  it('shows browser auto-save guidance instead of a summary save button', () => {
     renderWithSaveToast('/summary', <SummaryPage />)
-    fireEvent.click(screen.getByRole('button', { name: '결과 저장' }))
-    expect(screen.getByText(SAVE_TOAST_MESSAGE)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '결과 저장' })).not.toBeInTheDocument()
+    expect(screen.getByText('작성 내용은 현재 브라우저에 자동으로 저장됩니다.')).toBeInTheDocument()
+    expect(screen.queryByText(SAVE_TOAST_MESSAGE)).not.toBeInTheDocument()
   })
 
-  it('does not stack toasts when the save button is clicked twice', async () => {
+  it('does not stack toasts when the step 1 save button is clicked twice', async () => {
     vi.useFakeTimers()
-    renderWithSaveToast('/summary', <SummaryPage />)
+    renderWithSaveToast('/step/1/result', <Step1ResultPage />)
     fireEvent.click(screen.getByRole('button', { name: '결과 저장' }))
     fireEvent.click(screen.getByRole('button', { name: '결과 저장' }))
     expect(screen.getAllByText(SAVE_TOAST_MESSAGE)).toHaveLength(1)

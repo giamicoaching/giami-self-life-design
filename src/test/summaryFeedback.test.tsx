@@ -14,7 +14,7 @@ import {
 } from '../copy/programCopy.ts'
 import { SummaryPage } from '../pages/SummaryPage.tsx'
 import { ProgramProvider } from '../state/ProgramProvider.tsx'
-import { SaveToastProvider, SAVE_TOAST_MESSAGE } from '../state/SaveToast.tsx'
+import { SaveToastProvider } from '../state/SaveToast.tsx'
 import { getSupabaseClient } from '../supabase/client.ts'
 import { loadProgramState, saveProgramState } from '../storage/storage.ts'
 import { createMemoryStorage } from '../storage/memoryStorage.ts'
@@ -171,8 +171,8 @@ describe('summary anonymous feedback', () => {
     await waitFor(() => expect(screen.getByText(FEEDBACK_ERROR)).toBeInTheDocument())
     expect(screen.getByText(FEEDBACK_ERROR).closest('[aria-live="assertive"]')).toBeTruthy()
 
-    fireEvent.click(screen.getByRole('button', { name: '결과 저장' }))
-    expect(screen.getByText(SAVE_TOAST_MESSAGE)).toBeInTheDocument()
+    expect(screen.queryByRole('button', { name: '결과 저장' })).not.toBeInTheDocument()
+    expect(loadProgramState(storage)?.goal).toContain('주 3회')
     fireEvent.click(screen.getByRole('button', { name: '생애설계 완료' }))
     expect(screen.getByText('자기주도 생애설계를 완료했습니다.')).toBeInTheDocument()
     expect(loadProgramState(storage)?.programCompleted).toBe(true)

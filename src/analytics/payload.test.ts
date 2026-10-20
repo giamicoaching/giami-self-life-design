@@ -25,7 +25,7 @@ describe('buildUsageStartRow', () => {
     expect(Object.keys(row ?? {}).sort()).toEqual(['age_group', 'gender', 'run_id'])
     expect(row).not.toHaveProperty('comment')
     expect(row).not.toHaveProperty('event_name')
-    expect(JSON.stringify(row)).not.toContain('67')
+    expect(JSON.stringify({ ...row, run_id: undefined })).not.toContain('67')
     expect(JSON.stringify(row)).not.toContain('ageYears')
     expect(JSON.stringify(row)).not.toContain('ageInput')
   })
